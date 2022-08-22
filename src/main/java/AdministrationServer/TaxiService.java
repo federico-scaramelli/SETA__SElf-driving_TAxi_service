@@ -1,6 +1,6 @@
 package AdministrationServer;
 
-import TaxiNetwork.Taxi;
+import TaxiNetwork.TaxiData;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
@@ -8,18 +8,19 @@ import javax.ws.rs.core.Response;
 @Path("taxi")
 public class TaxiService
 {
+    public static final String addTaxiAddress = MainServer.GetAddress() + "taxi/add";
+
     @Path("add")
     @POST
-    @Produces( {"application/json", "application/xml"} )
     @Consumes( {"application/json", "application/xml"} )
-    public Response addTaxi(Taxi taxi)
+    public Response addTaxi(TaxiData taxi)
     {
         System.out.println("Request to add a new taxi received...");
         SmartCityManager smartCity = SmartCityManager.getInstance();
         if (smartCity.addTaxi(taxi))
         {
             ServerResponseHelper responseHelper = ServerResponseHelper.getInstance();
-            return Response.ok().entity(responseHelper).build();
+            return Response.ok().build();
         }
         return Response.status(Response.Status.CONFLICT).build();
     }

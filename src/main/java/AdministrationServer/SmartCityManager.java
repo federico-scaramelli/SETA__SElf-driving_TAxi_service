@@ -1,25 +1,24 @@
 package AdministrationServer;
 
 import javax.xml.bind.annotation.XmlElement;
-import java.util.ArrayList;
 import java.util.HashMap;
 
-import TaxiNetwork.Taxi;
+import TaxiNetwork.TaxiData;
 
 public class SmartCityManager
 {
     private static SmartCityManager instance;
 
     @XmlElement (name = "taxi_list")
-    private HashMap<Integer, Taxi> taxiList;
+    private HashMap<Integer, TaxiData> taxiList;
     //private ArrayList<Taxi> taxiList;
 
     private SmartCityManager()
     {
         //taxiList = new ArrayList<Taxi>();
-        taxiList = new HashMap<Integer, Taxi>();
-        taxiList.put(13, new Taxi(13));
-        taxiList.put(14, new Taxi(14));
+        taxiList = new HashMap<Integer, TaxiData>();
+        taxiList.put(13, new TaxiData(13));
+        taxiList.put(14, new TaxiData(14));
     }
 
     public synchronized static SmartCityManager getInstance()
@@ -32,9 +31,9 @@ public class SmartCityManager
     }
 
     //public ArrayList<Taxi> getTaxiList() { return taxiList; }
-    public HashMap<Integer, Taxi> getTaxiList()  { return taxiList; }
+    public HashMap<Integer, TaxiData> getTaxiList()  { return taxiList; }
 
-    public synchronized boolean addTaxi (Taxi taxi)
+    public synchronized boolean addTaxi (TaxiData taxi)
     {
         if ( taxiList.containsKey(taxi.getID()) )
         {

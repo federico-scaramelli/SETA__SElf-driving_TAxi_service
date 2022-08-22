@@ -1,10 +1,5 @@
 package AdministrationServer;
 
-import TaxiNetwork.Taxi;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-
 public class ServerResponseHelper
 {
     private static ServerResponseHelper instance;

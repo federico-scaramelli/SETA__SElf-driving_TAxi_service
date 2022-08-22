@@ -1,6 +1,7 @@
 package AdministrationClient;
 
 import AdministrationServer.MainServer;
+import AdministrationServer.StatisticsService;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
@@ -11,11 +12,9 @@ public class AdministrationClient
     public static void main(String[] argv)
     {
         Client client = Client.create();
-        String serverAddress = "http://" + MainServer.IP + ":" + MainServer.PORT + "/";
         ClientResponse response = null;
 
-        String getList = "statistics/get/taxi_list";
-        response = getTaxiListRequest(client, serverAddress + getList);
+        response = getTaxiListRequest(client, StatisticsService.getTaxiListAddress);
         System.out.println(response);
     }
 

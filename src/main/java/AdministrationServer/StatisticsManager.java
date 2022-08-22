@@ -1,6 +1,6 @@
 package AdministrationServer;
 
-import TaxiNetwork.Taxi;
+import TaxiNetwork.TaxiData;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +20,7 @@ public class StatisticsManager
     HashMap<Integer, ArrayList<Statistics>> localStatsList;
 
     // Taxi list String
-    public String getTaxiListString(HashMap<Integer, Taxi> taxiList)
+    public String getTaxiListString(HashMap<Integer, TaxiData> taxiList)
     {
         if (taxiList.size() == 0)
             return "Currently there are no taxi connected to the Smart City.";

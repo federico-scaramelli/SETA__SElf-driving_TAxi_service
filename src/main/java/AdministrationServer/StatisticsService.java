@@ -8,6 +8,8 @@ import javax.ws.rs.core.Response;
 @Path("statistics")
 public class StatisticsService
 {
+    public static final String getTaxiListAddress = MainServer.GetAddress() + "statistics/get/taxi_list";
+
     @Path ("get/taxi_list")
     @GET
     @Produces ({"text/plain"})
