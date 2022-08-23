@@ -1,10 +1,13 @@
 package AdministrationServer;
 
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import TaxiNetwork.TaxiData;
 
+@XmlRootElement
 public class SmartCityManager
 {
     private static SmartCityManager instance;
@@ -17,8 +20,6 @@ public class SmartCityManager
     {
         //taxiList = new ArrayList<Taxi>();
         taxiList = new HashMap<Integer, TaxiData>();
-        taxiList.put(13, new TaxiData(13));
-        taxiList.put(14, new TaxiData(14));
     }
 
     public synchronized static SmartCityManager getInstance()
@@ -31,7 +32,8 @@ public class SmartCityManager
     }
 
     //public ArrayList<Taxi> getTaxiList() { return taxiList; }
-    public HashMap<Integer, TaxiData> getTaxiList()  { return taxiList; }
+    public HashMap<Integer, TaxiData> getTaxiMap()  { return taxiList; }
+    public ArrayList<TaxiData> getTaxiList()  { return new ArrayList<>(taxiList.values()); }
 
     public synchronized boolean addTaxi (TaxiData taxi)
     {
@@ -42,8 +44,7 @@ public class SmartCityManager
         }
 
         taxiList.put(taxi.getID(), taxi);
-        System.out.println("Taxi added successfully.");
-        System.out.println(taxi.toString());
+        System.out.println("Taxi " + taxi.getID() + " added successfully.");
         return true;
     }
 

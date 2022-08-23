@@ -9,6 +9,15 @@ public class StatisticsManager
 {
     // Singleton
     private static StatisticsManager instance;
+
+    // List of local statistics related to taxi's IDs
+    private HashMap<Integer, ArrayList<Statistics>> localStatsList;
+
+    private StatisticsManager()
+    {
+        localStatsList = new HashMap<Integer, ArrayList<Statistics>>();
+    }
+
     public synchronized static StatisticsManager getInstance() {
         if (instance == null) {
             instance = new StatisticsManager();
@@ -16,20 +25,28 @@ public class StatisticsManager
         return instance;
     }
 
-    // List of local statistics related to taxi's IDs
-    HashMap<Integer, ArrayList<Statistics>> localStatsList;
+    public void AddLocalStatistics(Statistics localStats)
+    {
+        System.out.println(localStats.toString());
+        if (localStatsList.containsKey(localStats.ID)) {
+            localStatsList.get(localStats.ID).add(localStats);
+        } else {
+            localStatsList.computeIfAbsent(localStats.ID, s -> new ArrayList<>()).add(localStats);
+        }
+    }
 
     // Taxi list String
-    public String getTaxiListString(HashMap<Integer, TaxiData> taxiList)
+    public String getTaxiListString(ArrayList<TaxiData> taxiList)
     {
         if (taxiList.size() == 0)
             return "Currently there are no taxi connected to the Smart City.";
 
-        String taxiListString = "List of taxis currently located in the Smart City:\n";
-        for (Integer key : taxiList.keySet()) {
-            taxiListString += "-> " + taxiList.get(key).toString() + "\n";
+        StringBuilder taxiListString = new StringBuilder("List of taxis currently located in the Smart City:\n");
+        for (TaxiData taxiData : taxiList)
+        {
+            taxiListString.append("-> ").append(taxiData.toString()).append("\n");
         }
-        return taxiListString;
+        return taxiListString.toString();
     }
 
     // Returns a LocalStatistics object containing the average of the last 'n' local statistics of a taxi with ID 'id'

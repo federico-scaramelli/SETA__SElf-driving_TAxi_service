@@ -1,7 +1,14 @@
 package AdministrationServer;
 
+import java.text.DateFormat;
+import java.util.Date;
+
 public class Statistics
 {
+    public Statistics() {}
+
+    public int ID;
+
     public float traveledKm;
     public float batteryLevel;
     public float pollutionLevel;
@@ -9,7 +16,7 @@ public class Statistics
 
     public long timestamp;
 
-    Statistics(float traveledKm, float batteryLevel, float pollutionLevel, int accomplishedRides)
+    public Statistics(float traveledKm, float batteryLevel, float pollutionLevel, int accomplishedRides)
     {
         this.traveledKm = traveledKm;
         this.batteryLevel = batteryLevel;
@@ -19,4 +26,41 @@ public class Statistics
         timestamp = System.currentTimeMillis();
     }
 
+    public Statistics(Statistics statistics)
+    {
+        this.ID = statistics.ID;
+        this.traveledKm = statistics.traveledKm;
+        this.batteryLevel = statistics.batteryLevel;
+        this.pollutionLevel = statistics.pollutionLevel;
+        this.accomplishedRides = statistics.accomplishedRides;
+        this.timestamp = statistics.timestamp;
+    }
+
+    public Statistics(int ID) { this.ID = ID; }
+
+    public void addTraveledKm(float adding) { traveledKm += adding; }
+    public void setBatteryLevel(float level) { batteryLevel += level; }
+    public void addPollutionLevel(float adding) { pollutionLevel += adding; }
+    public void addAccomplishedRide() { accomplishedRides++; }
+    public void setTimestamp() { timestamp = System.currentTimeMillis(); }
+
+    public void resetData()
+    {
+        traveledKm = 0;
+        batteryLevel = 0;
+        pollutionLevel = 0;
+        accomplishedRides = 0;
+        timestamp = 0;
+    }
+
+    public String toString()
+    {
+        return "Local statistics of Taxi " + ID +
+                " at timestamp " +  DateFormat.getTimeInstance().format(new Date(timestamp)) +
+                " containing:\n" +
+                "-> Traveled km: " + traveledKm + "\n" +
+                "-> Battery level: " + batteryLevel + "\n" +
+                "-> Pollution level: " + pollutionLevel + "\n" +
+                "-> Accomplished rides: " + accomplishedRides;
+    }
 }
