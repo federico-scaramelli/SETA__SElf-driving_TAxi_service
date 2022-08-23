@@ -36,7 +36,7 @@ public class TaxiData
         this.ID = ID;
         this.port = port;
 
-        localStatistics = new Statistics(ID);
+        localStatistics = new Statistics(this);
     }
 
     // Random ID and port constructor

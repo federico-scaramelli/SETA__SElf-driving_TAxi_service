@@ -48,10 +48,6 @@ public class TaxiLocalStatisticsThread implements Runnable
                 }
 
                 localStatsToSend.resetData();
-
-
-
-                break;
             } catch (Exception e) {
                 e.toString();
             }

@@ -27,7 +27,6 @@ public class StatisticsManager
 
     public void AddLocalStatistics(Statistics localStats)
     {
-        System.out.println(localStats.toString());
         if (localStatsList.containsKey(localStats.ID)) {
             localStatsList.get(localStats.ID).add(localStats);
         } else {

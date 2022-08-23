@@ -1,6 +1,5 @@
 package TaxiNetwork;
 import AdministrationServer.AddTaxiResponse;
-import AdministrationServer.TaxiService;
 import com.google.gson.Gson;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -44,7 +43,7 @@ public class TaxiProcess
             AddTaxiResponse addTaxiResponse = serializer.fromJson(
                                                 clientResponse.getEntity(String.class),
                                                 AddTaxiResponse.class);
-            myData.setPosition(GridHelper.getRechargeStation(addTaxiResponse.getDistrict()));
+            myData.setPosition(addTaxiResponse.getPosition());
             myData.setTaxiList(addTaxiResponse.getTaxiList());
 
             System.out.println("Successfully connected to the Smart City.\n");
@@ -59,7 +58,7 @@ public class TaxiProcess
         // === Statistics Thread ===
         TaxiLocalStatisticsThread statisticsThread = new TaxiLocalStatisticsThread(myData);
         myActions.SimulateRide();
-        //statisticsThread.run();
+        statisticsThread.run();
         System.in.read();
     }
 }

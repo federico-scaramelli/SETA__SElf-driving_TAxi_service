@@ -1,11 +1,15 @@
 package AdministrationServer;
 
+import TaxiNetwork.TaxiData;
+
 import java.text.DateFormat;
 import java.util.Date;
 
 public class Statistics
 {
     public Statistics() {}
+
+    private transient TaxiData taxiData;
 
     public int ID;
 
@@ -36,7 +40,11 @@ public class Statistics
         this.timestamp = statistics.timestamp;
     }
 
-    public Statistics(int ID) { this.ID = ID; }
+    public Statistics(TaxiData taxiData)
+    {
+        this.taxiData = taxiData;
+        this.ID = taxiData.ID;
+    }
 
     public void addTraveledKm(float adding) { traveledKm += adding; }
     public void setBatteryLevel(float level) { batteryLevel += level; }
@@ -47,7 +55,7 @@ public class Statistics
     public void resetData()
     {
         traveledKm = 0;
-        batteryLevel = 0;
+        batteryLevel = taxiData.batteryLevel;
         pollutionLevel = 0;
         accomplishedRides = 0;
         timestamp = 0;
