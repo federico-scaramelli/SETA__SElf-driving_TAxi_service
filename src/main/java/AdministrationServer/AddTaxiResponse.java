@@ -9,15 +9,17 @@ import java.util.Random;
 
 public class AddTaxiResponse
 {
+    public AddTaxiResponse() {}
+
     ArrayList<TaxiData> taxiList;
     GridCell position;
-    private final int startingDistrict;
+    int startingDistrict;
 
-    public AddTaxiResponse()
+    public AddTaxiResponse(Boolean serverSide)
     {
         taxiList = new ArrayList<TaxiData>(SmartCityManager.getInstance().getTaxiList());
         startingDistrict = new Random().nextInt(4) + 1;
-        System.out.println(startingDistrict);
+        //System.out.println(startingDistrict);
         position = GridHelper.getRechargeStation(startingDistrict);
         System.out.println(position);
     }
@@ -29,8 +31,8 @@ public class AddTaxiResponse
     {
         return "List of taxis currently connected to the Smart City: \n" +
                 taxiList.toString() +
-                ".\n--> Starting assigned district: " +
-                startingDistrict +
+                //".\n--> Starting assigned district: " +
+                //startingDistrict +
                 ".\n    |--> Starting recharging station cell: " +
                 position;
     }

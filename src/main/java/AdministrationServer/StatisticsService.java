@@ -20,6 +20,8 @@ public class StatisticsService
         return Response.ok().entity(taxiList).build();
     }
 
+    //TODO: two get avg services
+
     @Path("add")
     @POST
     @Consumes( {"application/json", "application/xml"} )

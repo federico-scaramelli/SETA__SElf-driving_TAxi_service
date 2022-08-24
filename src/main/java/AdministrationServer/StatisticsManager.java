@@ -11,7 +11,7 @@ public class StatisticsManager
     private static StatisticsManager instance;
 
     // List of local statistics related to taxi's IDs
-    private HashMap<Integer, ArrayList<Statistics>> localStatsList;
+    private final HashMap<Integer, ArrayList<Statistics>> localStatsList;
 
     private StatisticsManager()
     {
@@ -48,33 +48,39 @@ public class StatisticsManager
         return taxiListString.toString();
     }
 
-    // Returns a LocalStatistics object containing the average of the last 'n' local statistics of a taxi with ID 'id'
-    public Statistics getAverageLocalStats (int id, int n)
+    // Returns a StatisticsAveragePacket object containing the average
+    // of the last 'n' local statistics of a taxi with ID 'id'
+    public StatisticsAveragePacket getAverageLocalStats (int id, int n)
     {
         if (!localStatsList.containsKey(id))
         {
             System.out.println("No local statistics available for taxi " + id);
             return null;
         }
-        float avgTraveledKm = 0,
-                avgBatteryLevel = 0,
-                avgPollutionLevel = 0;
+        double avgTraveledKm = 0;
+        double avgBatteryLevel = 0;
+        double avgPollutionLevel = 0;
         int accomplishedRides = 0;
         ArrayList<Statistics> localStats = localStatsList.get(id);
+
         for (int i = localStats.size() - 1; i >= localStats.size() - n; i--) {
             avgTraveledKm += localStats.get(i).traveledKm;
             avgBatteryLevel += localStats.get(i).batteryLevel;
-            avgPollutionLevel += localStats.get(i).pollutionLevel;
+            for (double pm10Avg : localStats.get(i).pm10Averages) {
+                avgPollutionLevel += pm10Avg;
+            }
             accomplishedRides += localStats.get(i).accomplishedRides;
         }
         avgTraveledKm /= n;
         avgBatteryLevel /= n;
         avgPollutionLevel /= n;
 
-        return new Statistics(avgTraveledKm, avgBatteryLevel, avgPollutionLevel, accomplishedRides);
+        return new StatisticsAveragePacket(avgTraveledKm, avgBatteryLevel, avgPollutionLevel, accomplishedRides);
     }
 
-    public Statistics getAverageGlobalStats (long t1, long t2)
+    // Returns a StatisticsAveragePacket object containing the average
+    // of all the local statistics received with timestamps between t1 and t2
+    public StatisticsAveragePacket getAverageGlobalStats (long t1, long t2)
     {
         ArrayList<ArrayList<Statistics>> allTaxiesStats = new ArrayList<>();
         for (int key : localStatsList.keySet())
@@ -86,11 +92,11 @@ public class StatisticsManager
             return null;
         }
 
-        float avgTraveledKm = 0,
-                avgBatteryLevel = 0,
-                avgPollutionLevel = 0;
-        int accomplishedRides = 0,
-                count = 0;
+        double avgTraveledKm = 0;
+        double avgBatteryLevel = 0;
+        double avgPollutionLevel = 0;
+        int accomplishedRides = 0;
+        int count = 0;
 
         // For each list of stats for each taxi that has sent at least one
         for (ArrayList<Statistics> localStatsList : allTaxiesStats)
@@ -101,7 +107,9 @@ public class StatisticsManager
                 {
                     avgTraveledKm += localStats.traveledKm;
                     avgBatteryLevel += localStats.batteryLevel;
-                    avgPollutionLevel += localStats.pollutionLevel;
+                    for (double pm10Avg : localStats.pm10Averages) {
+                        avgPollutionLevel += pm10Avg;
+                    }
                     accomplishedRides += localStats.accomplishedRides;
                     count ++;
                 }
@@ -111,6 +119,6 @@ public class StatisticsManager
         avgBatteryLevel /= count;
         avgPollutionLevel /= count;
 
-        return new Statistics(avgTraveledKm, avgBatteryLevel, avgPollutionLevel, accomplishedRides);
+        return new StatisticsAveragePacket(avgTraveledKm, avgBatteryLevel, avgPollutionLevel, accomplishedRides);
     }
 }

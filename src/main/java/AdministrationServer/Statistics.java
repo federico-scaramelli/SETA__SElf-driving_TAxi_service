@@ -3,7 +3,9 @@ package AdministrationServer;
 import TaxiNetwork.TaxiData;
 
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class Statistics
 {
@@ -15,27 +17,17 @@ public class Statistics
 
     public float traveledKm;
     public float batteryLevel;
-    public float pollutionLevel;
+    public List<Double> pm10Averages = new ArrayList<>();
     public int accomplishedRides;
 
     public long timestamp;
-
-    public Statistics(float traveledKm, float batteryLevel, float pollutionLevel, int accomplishedRides)
-    {
-        this.traveledKm = traveledKm;
-        this.batteryLevel = batteryLevel;
-        this.pollutionLevel = pollutionLevel;
-        this.accomplishedRides = accomplishedRides;
-
-        timestamp = System.currentTimeMillis();
-    }
 
     public Statistics(Statistics statistics)
     {
         this.ID = statistics.ID;
         this.traveledKm = statistics.traveledKm;
         this.batteryLevel = statistics.batteryLevel;
-        this.pollutionLevel = statistics.pollutionLevel;
+        this.pm10Averages = statistics.pm10Averages;
         this.accomplishedRides = statistics.accomplishedRides;
         this.timestamp = statistics.timestamp;
     }
@@ -48,7 +40,11 @@ public class Statistics
 
     public void addTraveledKm(float adding) { traveledKm += adding; }
     public void setBatteryLevel(float level) { batteryLevel += level; }
-    public void addPollutionLevel(float adding) { pollutionLevel += adding; }
+    public void addPM10AverageValue(double avg)
+    {
+        pm10Averages.add(avg);
+        System.out.println("Received new PM10 avg value: " + pm10Averages);
+    }
     public void addAccomplishedRide() { accomplishedRides++; }
     public void setTimestamp() { timestamp = System.currentTimeMillis(); }
 
@@ -56,7 +52,7 @@ public class Statistics
     {
         traveledKm = 0;
         batteryLevel = taxiData.batteryLevel;
-        pollutionLevel = 0;
+        pm10Averages.clear();
         accomplishedRides = 0;
         timestamp = 0;
     }
@@ -68,7 +64,7 @@ public class Statistics
                 " containing:\n" +
                 "-> Traveled km: " + traveledKm + "\n" +
                 "-> Battery level: " + batteryLevel + "\n" +
-                "-> Pollution level: " + pollutionLevel + "\n" +
+                "-> Pollution level: " + pm10Averages + "\n" +
                 "-> Accomplished rides: " + accomplishedRides;
     }
 }
