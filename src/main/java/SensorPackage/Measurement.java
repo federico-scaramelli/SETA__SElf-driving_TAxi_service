@@ -1,5 +1,8 @@
 package SensorPackage;
 
+import java.text.DateFormat;
+import java.util.Date;
+
 public class Measurement implements Comparable<Measurement> {
 
     private String id;

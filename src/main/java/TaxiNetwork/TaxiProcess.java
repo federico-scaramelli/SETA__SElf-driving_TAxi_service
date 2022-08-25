@@ -1,5 +1,8 @@
 package TaxiNetwork;
 import AdministrationServer.AddTaxiResponse;
+import SensorPackage.PM10Buffer;
+import SensorPackage.PM10ReaderThread;
+import SensorPackage.PM10Simulator;
 import com.google.gson.Gson;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -19,6 +22,7 @@ public class TaxiProcess
         // Components
         TaxiData myData = new TaxiData();
         TaxiActions myActions = new TaxiActions(myData);
+
 
         // REST Client to communicate with the administration server
         Client client = Client.create();
@@ -55,10 +59,18 @@ public class TaxiProcess
             System.exit(0);
         }
 
-        // === Statistics Thread ===
-        TaxiLocalStatisticsThread statisticsThread = new TaxiLocalStatisticsThread(myData);
+        // === Statistics Threads ===
+        PM10Buffer pm10Buffer = new PM10Buffer();
+        Thread pm10Sensor = new Thread (new PM10Simulator(pm10Buffer));
+        Thread pm10Reader = new Thread (new PM10ReaderThread(myData.getLocalStatistics(), pm10Buffer));
+        pm10Sensor.start();
+        pm10Reader.start();
+
+        System.in.read();
+
+        /*TaxiLocalStatisticsThread statisticsThread = new TaxiLocalStatisticsThread(myData);
         myActions.SimulateRide();
         statisticsThread.run();
-        System.in.read();
+        System.in.read();*/
     }
 }

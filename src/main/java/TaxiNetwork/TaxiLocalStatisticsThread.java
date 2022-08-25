@@ -1,10 +1,6 @@
 package TaxiNetwork;
 
-
-import AdministrationServer.AddTaxiResponse;
 import AdministrationServer.Statistics;
-import AdministrationServer.StatisticsService;
-import AdministrationServer.TaxiService;
 import com.google.gson.Gson;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -14,25 +10,30 @@ public class TaxiLocalStatisticsThread implements Runnable
 {
     public static final String sendLocalStatsPath = "statistics/add";
 
-    TaxiData myTaxi;
-    Statistics localStatsToSend;
+    Statistics originalStats;
+    Statistics statsCopy;
     Client client = Client.create();
 
     private final Gson serializer = new Gson();
 
-    public TaxiLocalStatisticsThread(TaxiData taxi)
+    public TaxiLocalStatisticsThread(Statistics originalStats)
     {
-        myTaxi = taxi;
+        this.originalStats = originalStats;
     }
 
     public void run() {
         while (true) {
             try {
                 Thread.sleep(2000);
-                localStatsToSend = myTaxi.getLocalStatistics();
-                localStatsToSend.setTimestamp();
 
-                String serializedStats = serializer.toJson(localStatsToSend);
+                //SYNC
+                statsCopy = new Statistics(originalStats);
+                originalStats.resetData();
+                //END SYNC
+
+                statsCopy.setTimestamp();
+
+                String serializedStats = serializer.toJson(statsCopy);
                 WebResource webResource = client.resource(TaxiProcess.adminServerAddress + sendLocalStatsPath);
                 ClientResponse clientResponse = webResource
                         .accept("application/json")
@@ -47,7 +48,7 @@ public class TaxiLocalStatisticsThread implements Runnable
                             "--> Info: " + clientResponse.getStatusInfo());
                 }
 
-                localStatsToSend.resetData();
+                statsCopy.resetData();
             } catch (Exception e) {
                 e.toString();
             }

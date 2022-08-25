@@ -8,10 +8,10 @@ import java.util.List;
 public class PM10ReaderThread extends Thread
 {
     PM10Buffer buffer;
-    TaxiData myData;
+    Statistics stats;
 
-    public PM10ReaderThread(TaxiData myData, PM10Buffer buffer) {
-        this.myData = myData;
+    public PM10ReaderThread(Statistics stats, PM10Buffer buffer) {
+        this.stats = stats;
         this.buffer = buffer;
     }
 
@@ -36,7 +36,7 @@ public class PM10ReaderThread extends Thread
         }
         avg /= 8.0;
 
-        addAverageToStatistics(avg, myData.getLocalStatistics());
+        addAverageToStatistics(avg, stats);
     }
 
     private void addAverageToStatistics(double avg, Statistics stats)
