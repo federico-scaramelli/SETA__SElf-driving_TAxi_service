@@ -27,7 +27,7 @@ public class Statistics
         this.ID = statistics.ID;
         this.traveledKm = statistics.traveledKm;
         this.batteryLevel = statistics.batteryLevel;
-        this.pm10Averages = statistics.pm10Averages;
+        this.pm10Averages = new ArrayList<>(statistics.pm10Averages);
         this.accomplishedRides = statistics.accomplishedRides;
         this.timestamp = statistics.timestamp;
     }
@@ -38,17 +38,17 @@ public class Statistics
         this.ID = taxiData.ID;
     }
 
-    public void addTraveledKm(float adding) { traveledKm += adding; }
-    public void setBatteryLevel(float level) { batteryLevel += level; }
-    public void addPM10AverageValue(double avg)
+    public synchronized void addTraveledKm(float adding) { traveledKm += adding; }
+    public synchronized void setBatteryLevel(float level) { batteryLevel += level; }
+    public synchronized void addPM10AverageValue(double avg)
     {
         pm10Averages.add(avg);
         System.out.println("Received new PM10 avg value: " + pm10Averages);
     }
-    public void addAccomplishedRide() { accomplishedRides++; }
-    public void setTimestamp() { timestamp = System.currentTimeMillis(); }
+    public synchronized void addAccomplishedRide() { accomplishedRides++; }
+    public synchronized void setTimestamp() { timestamp = System.currentTimeMillis(); }
 
-    public void resetData()
+    public synchronized void resetData()
     {
         traveledKm = 0;
         batteryLevel = taxiData.batteryLevel;

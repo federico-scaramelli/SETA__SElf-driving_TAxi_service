@@ -14,13 +14,21 @@ public class StatisticsService
     @Produces( {"application/json", "application/xml"} )
     public Response getTaxiList()
     {
-        System.out.println("Taxi list requested...");
+        //System.out.println("Taxi list requested...");
         ArrayList<TaxiData> taxiList = SmartCityManager.getInstance().getTaxiList();
 
         return Response.ok().entity(taxiList).build();
     }
 
-    //TODO: two get avg services
+    @Path("get/avg/last_{n}_from_{id}")
+    @GET
+    @Produces( {"application/json", "application/xml"} )
+    public Response getLastNAvgFromSingle(@PathParam("n") int n, @PathParam("id")int id)
+    {
+        AvgStatsResponse avgResponse = StatisticsManager.getInstance().getAverageLocalStats(id, n);
+
+        return Response.ok().entity(avgResponse).build();
+    }
 
     @Path("add")
     @POST

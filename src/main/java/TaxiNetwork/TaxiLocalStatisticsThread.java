@@ -24,12 +24,19 @@ public class TaxiLocalStatisticsThread implements Runnable
     public void run() {
         while (true) {
             try {
-                Thread.sleep(2000);
+                Thread.sleep(5000);
 
-                //SYNC
-                statsCopy = new Statistics(originalStats);
-                originalStats.resetData();
-                //END SYNC
+                synchronized (originalStats)
+                {
+                    statsCopy = new Statistics(originalStats);
+                    /*try{
+                        System.out.println("5 sec di attesa mentre mi copio le stats");
+                        Thread.sleep(5000);
+                    }catch(Exception e){
+                        e.printStackTrace();
+                    }*/
+                    originalStats.resetData();
+                }
 
                 statsCopy.setTimestamp();
 
@@ -47,8 +54,6 @@ public class TaxiLocalStatisticsThread implements Runnable
                             "--> Error code: " + clientResponse.getStatus() + "\n" +
                             "--> Info: " + clientResponse.getStatusInfo());
                 }
-
-                statsCopy.resetData();
             } catch (Exception e) {
                 e.toString();
             }

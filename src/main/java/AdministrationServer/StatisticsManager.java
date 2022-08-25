@@ -25,7 +25,7 @@ public class StatisticsManager
         return instance;
     }
 
-    public void AddLocalStatistics(Statistics localStats)
+    public synchronized void AddLocalStatistics(Statistics localStats)
     {
         if (localStatsList.containsKey(localStats.ID)) {
             localStatsList.get(localStats.ID).add(localStats);
@@ -50,7 +50,7 @@ public class StatisticsManager
 
     // Returns a StatisticsAveragePacket object containing the average
     // of the last 'n' local statistics of a taxi with ID 'id'
-    public StatisticsAveragePacket getAverageLocalStats (int id, int n)
+    public synchronized AvgStatsResponse getAverageLocalStats (int id, int n)
     {
         if (!localStatsList.containsKey(id))
         {
@@ -64,23 +64,26 @@ public class StatisticsManager
         ArrayList<Statistics> localStats = localStatsList.get(id);
 
         for (int i = localStats.size() - 1; i >= localStats.size() - n; i--) {
+            double tempPM10Averages = 0.0;
             avgTraveledKm += localStats.get(i).traveledKm;
             avgBatteryLevel += localStats.get(i).batteryLevel;
             for (double pm10Avg : localStats.get(i).pm10Averages) {
-                avgPollutionLevel += pm10Avg;
+                tempPM10Averages += pm10Avg;
             }
+            tempPM10Averages /= localStats.get(i).pm10Averages.size();
+            avgPollutionLevel += tempPM10Averages;
             accomplishedRides += localStats.get(i).accomplishedRides;
         }
         avgTraveledKm /= n;
         avgBatteryLevel /= n;
         avgPollutionLevel /= n;
 
-        return new StatisticsAveragePacket(avgTraveledKm, avgBatteryLevel, avgPollutionLevel, accomplishedRides);
+        return new AvgStatsResponse(avgTraveledKm, avgBatteryLevel, avgPollutionLevel, accomplishedRides);
     }
 
     // Returns a StatisticsAveragePacket object containing the average
     // of all the local statistics received with timestamps between t1 and t2
-    public StatisticsAveragePacket getAverageGlobalStats (long t1, long t2)
+    public AvgStatsResponse getAverageGlobalStats (long t1, long t2)
     {
         ArrayList<ArrayList<Statistics>> allTaxiesStats = new ArrayList<>();
         for (int key : localStatsList.keySet())
@@ -119,6 +122,6 @@ public class StatisticsManager
         avgBatteryLevel /= count;
         avgPollutionLevel /= count;
 
-        return new StatisticsAveragePacket(avgTraveledKm, avgBatteryLevel, avgPollutionLevel, accomplishedRides);
+        return new AvgStatsResponse(avgTraveledKm, avgBatteryLevel, avgPollutionLevel, accomplishedRides);
     }
 }

@@ -14,7 +14,6 @@ public class SmartCityManager
 
     @XmlElement (name = "taxi_list")
     private HashMap<Integer, TaxiData> taxiList;
-    //private ArrayList<Taxi> taxiList;
 
     private SmartCityManager()
     {
@@ -31,9 +30,8 @@ public class SmartCityManager
         return instance;
     }
 
-    //public ArrayList<Taxi> getTaxiList() { return taxiList; }
-    public HashMap<Integer, TaxiData> getTaxiMap()  { return taxiList; }
-    public ArrayList<TaxiData> getTaxiList()  { return new ArrayList<>(taxiList.values()); }
+    public synchronized HashMap<Integer, TaxiData> getTaxiMap()  { return taxiList; }
+    public synchronized ArrayList<TaxiData> getTaxiList()  { return new ArrayList<>(taxiList.values()); }
 
     public synchronized boolean addTaxi (TaxiData taxi)
     {
@@ -42,7 +40,6 @@ public class SmartCityManager
             System.out.println("ID already present.\n");
             return false;
         }
-
         taxiList.put(taxi.getID(), taxi);
         System.out.println("Taxi " + taxi.getID() + " added successfully.");
         return true;

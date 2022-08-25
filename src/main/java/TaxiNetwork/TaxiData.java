@@ -9,10 +9,10 @@ public class TaxiData
     // === Connection data ===
 
     // Taxi uses ID numbers from 1 to 1000
-    public int ID;
-    public String address = "localhost";
+    public final int ID;
+    public final String address = "localhost";
     // Taxi uses ports from 9798 to 65535
-    public int port;
+    public final int port;
 
     // === Working data ===
     public int batteryLevel = 100;
@@ -54,12 +54,12 @@ public class TaxiData
         return ID;
     }
     public int getPort() { return port; }
-    public Statistics getLocalStatistics() { return localStatistics; }
-    public GridCell getPosition() { return currentPosition; }
+    public synchronized Statistics getLocalStatistics() { return localStatistics; }
+    public synchronized GridCell getPosition() { return currentPosition; }
 
     // === Setters ===
-    public void setPosition(GridCell position) { this.currentPosition = position; }
-    public void setTaxiList(ArrayList<TaxiData> taxiList) { this.taxiList = taxiList; }
+    public synchronized void setPosition(GridCell position) { this.currentPosition = position; }
+    public synchronized void setTaxiList(ArrayList<TaxiData> taxiList) { this.taxiList = taxiList; }
 
 
     // === Utils ===

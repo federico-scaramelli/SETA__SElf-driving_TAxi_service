@@ -47,6 +47,7 @@ public class TaxiProcess
             AddTaxiResponse addTaxiResponse = serializer.fromJson(
                                                 clientResponse.getEntity(String.class),
                                                 AddTaxiResponse.class);
+            // Nobody can access myData at this point of the execution so synchronization is not needed
             myData.setPosition(addTaxiResponse.getPosition());
             myData.setTaxiList(addTaxiResponse.getTaxiList());
 
@@ -66,11 +67,9 @@ public class TaxiProcess
         pm10Sensor.start();
         pm10Reader.start();
 
-        System.in.read();
-
-        /*TaxiLocalStatisticsThread statisticsThread = new TaxiLocalStatisticsThread(myData);
-        myActions.SimulateRide();
+        TaxiLocalStatisticsThread statisticsThread = new TaxiLocalStatisticsThread(myData.getLocalStatistics());
+        //myActions.SimulateRide();
         statisticsThread.run();
-        System.in.read();*/
+        System.in.read();
     }
 }

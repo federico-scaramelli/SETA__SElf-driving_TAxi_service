@@ -17,8 +17,8 @@ public class PM10Buffer implements Buffer
             measurements.add(m);
 
             if (measurements.size() >= 8) {
-                System.out.println("PM10 buffer: values capacity reached.");
-                System.out.println("Buffer: " + measurements);
+                //System.out.println("PM10 buffer: values capacity reached.");
+                //System.out.println("Buffer: " + measurements);
                 measurements.notify();
             }
         }
@@ -52,8 +52,8 @@ public class PM10Buffer implements Buffer
             }
             // Add the remaining 4 values
             list.addAll(measurements);
-            System.out.println("Value sent: " + list);
-            System.out.println("Buffer: " + measurements);
+            //System.out.println("Value sent: " + list);
+            //System.out.println("Buffer: " + measurements);
 
             measurements.notify();
 

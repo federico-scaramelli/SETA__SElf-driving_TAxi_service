@@ -18,12 +18,12 @@ public class PM10ReaderThread extends Thread
     @Override
     public void run()
     {
-        System.out.println("Starting PM10 sensor buffer consumer...");
+        //System.out.println("Starting PM10 sensor buffer consumer...");
 
         while (true)
         {
             List<Measurement> list = buffer.readAllAndClean();
-            System.out.println("Received 8 values from the PM10 sensor, computing the average...");
+            //System.out.println("Received 8 values from the PM10 sensor, computing the average...");
             computeAverage(list);
         }
     }
