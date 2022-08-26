@@ -9,15 +9,11 @@ import java.util.Random;
 
 public class AddTaxiResponse
 {
-    public AddTaxiResponse() {}
-
     ArrayList<TaxiData> taxiList;
     GridCell position;
     int startingDistrict;
 
-    // I need an empty constructor which initialize some values, but I need also an empty
-    // constructor which does not do anything, so I use this boolean flag to differ from the two.
-    public AddTaxiResponse(Boolean serverSide)
+    public AddTaxiResponse()
     {
         taxiList = new ArrayList<TaxiData>(SmartCityManager.getInstance().getTaxiList());
         startingDistrict = new Random().nextInt(4) + 1;

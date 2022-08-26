@@ -16,14 +16,7 @@ public class TaxiData
 
     // === Working data ===
     public int batteryLevel = 100;
-    private GridCell currentPosition;
-
-    // === Statistics ===
-    private Statistics localStatistics;
-
-    // === Other data ===
-    ArrayList<TaxiData> taxiList;
-
+    public GridCell currentPosition;
 
 
     // === Constructors === //
@@ -35,8 +28,6 @@ public class TaxiData
         }
         this.ID = ID;
         this.port = port;
-
-        localStatistics = new Statistics(this);
     }
 
     // Random ID and port constructor
@@ -46,20 +37,16 @@ public class TaxiData
                 new Random().nextInt(65536 - 9797) + 9797);
     }
 
-
-
-
     // === Getters ===
     public int getID() {
         return ID;
     }
     public int getPort() { return port; }
-    public synchronized Statistics getLocalStatistics() { return localStatistics; }
     public synchronized GridCell getPosition() { return currentPosition; }
+    public synchronized int getBatteryLevel() { return batteryLevel; }
 
     // === Setters ===
     public synchronized void setPosition(GridCell position) { this.currentPosition = position; }
-    public synchronized void setTaxiList(ArrayList<TaxiData> taxiList) { this.taxiList = taxiList; }
 
 
     // === Utils ===

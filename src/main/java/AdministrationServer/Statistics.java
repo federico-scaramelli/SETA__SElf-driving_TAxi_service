@@ -19,7 +19,6 @@ public class Statistics
     public float batteryLevel;
     public List<Double> pm10Averages = new ArrayList<>();
     public int accomplishedRides;
-
     public long timestamp;
 
     public Statistics(Statistics statistics)
@@ -35,27 +34,29 @@ public class Statistics
     public Statistics(TaxiData taxiData)
     {
         this.taxiData = taxiData;
-        this.ID = taxiData.ID;
-        this.batteryLevel = taxiData.batteryLevel;
+        this.ID = taxiData.getID();
+        this.batteryLevel = taxiData.getBatteryLevel();
     }
 
-    public synchronized void addTraveledKm(float adding) { traveledKm += adding; }
-    public synchronized void setBatteryLevel(float level) { batteryLevel += level; }
-    public synchronized void addPM10AverageValue(double avg)
+    public void addTraveledKm(float adding) { traveledKm += adding; }
+    public void setBatteryLevel(float level) { batteryLevel += level; }
+    public void addPM10AverageValue(double avg)
     {
         pm10Averages.add(avg);
         System.out.println("Received new PM10 avg value: " + pm10Averages);
     }
-    public synchronized void addAccomplishedRide() { accomplishedRides++; }
-    public synchronized void setTimestamp() { timestamp = System.currentTimeMillis(); }
+    public void addAccomplishedRide() { accomplishedRides++; }
+    public void setTimestamp() { timestamp = System.currentTimeMillis(); }
 
-    public synchronized void resetData()
+    public void resetData()
     {
-        traveledKm = 0;
-        batteryLevel = taxiData.batteryLevel;
-        pm10Averages.clear();
-        accomplishedRides = 0;
-        timestamp = 0;
+        synchronized (this) {
+            traveledKm = 0;
+            batteryLevel = taxiData.getBatteryLevel();
+            pm10Averages.clear();
+            accomplishedRides = 0;
+            timestamp = 0;
+        }
     }
 
     public String toString()

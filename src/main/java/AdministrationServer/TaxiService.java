@@ -19,7 +19,8 @@ public class TaxiService
         SmartCityManager smartCity = SmartCityManager.getInstance();
         if ( smartCity.addTaxi(taxi) )
         {
-            AddTaxiResponse response = new AddTaxiResponse(true);
+            AddTaxiResponse response = new AddTaxiResponse();
+            taxi.setPosition(response.getPosition());
             return Response.ok().entity(response).build();
         }
         return Response.status(Response.Status.CONFLICT).build();

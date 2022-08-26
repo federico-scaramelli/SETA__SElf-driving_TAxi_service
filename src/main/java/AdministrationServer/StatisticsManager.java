@@ -25,36 +25,50 @@ public class StatisticsManager
         return instance;
     }
 
-    public synchronized void AddLocalStatistics(Statistics localStats)
+    public void addLocalStatistics(Statistics localStats)
     {
-        if (localStatsList.containsKey(localStats.ID)) {
-            localStatsList.get(localStats.ID).add(localStats);
-        } else {
-            localStatsList.computeIfAbsent(localStats.ID, s -> new ArrayList<>()).add(localStats);
+        synchronized (localStatsList) {
+            if (localStatsList.containsKey(localStats.ID)) {
+                localStatsList.get(localStats.ID).add(localStats);
+            } else {
+                localStatsList.computeIfAbsent(localStats.ID, s -> new ArrayList<>()).add(localStats);
+            }
         }
     }
 
-    public synchronized int getLocalStatsCount(int id)
+    public int getLocalStatsCount(int id)
     {
-        if (!localStatsList.containsKey(id))
-            return 0;
-        return localStatsList.get(id).size();
+        synchronized (localStatsList) {
+            if (!localStatsList.containsKey(id))
+                return 0;
+            return localStatsList.get(id).size();
+        }
     }
 
     // Returns a StatisticsAveragePacket object containing the average
     // of the last 'n' local statistics of a taxi with ID 'id'
-    public synchronized AvgStatsResponse getAverageLocalStats (int id, int n)
+    public AvgStatsResponse getAverageLocalStats (int id, int n)
     {
-        if (!localStatsList.containsKey(id))
+        ArrayList<Statistics> localStats;
+        synchronized (localStatsList)
         {
-            System.out.println("No local statistics available for taxi " + id);
-            return null;
+            /*try{
+                System.out.println("SLEEPING");
+                Thread.sleep(10000);
+            } catch (Exception e){}*/
+
+            if (!localStatsList.containsKey(id))
+            {
+                System.out.println("No local statistics available for taxi " + id);
+                return null;
+            }
+            localStats = localStatsList.get(id);
         }
+
         double avgTraveledKm = 0;
         double avgBatteryLevel = 0;
         double avgPollutionLevel = 0;
         int accomplishedRides = 0;
-        ArrayList<Statistics> localStats = localStatsList.get(id);
 
         for (int i = localStats.size() - 1; i >= localStats.size() - n; i--) {
             double tempPM10Averages = 0.0;
@@ -79,12 +93,15 @@ public class StatisticsManager
     public AvgStatsResponse getAverageGlobalStats (long t1, long t2)
     {
         ArrayList<Statistics> resultStatsList = new ArrayList<>();
-        for (int key : localStatsList.keySet())
+        synchronized (localStatsList)
         {
-            for (Statistics localStat : localStatsList.get(key))
+            for (int key : localStatsList.keySet())
             {
-                if (localStat.timestamp >= t1 && localStat.timestamp <= t2)
-                    resultStatsList.add(localStat);
+                for (Statistics localStat : localStatsList.get(key))
+                {
+                    if (localStat.timestamp >= t1 && localStat.timestamp <= t2)
+                        resultStatsList.add(localStat);
+                }
             }
         }
 

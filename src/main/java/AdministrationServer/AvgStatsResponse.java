@@ -4,8 +4,6 @@ import java.util.Objects;
 
 public class AvgStatsResponse
 {
-    public AvgStatsResponse() {}
-
     public double traveledKm;
     public double batteryLevel;
     public double pm10Averages;

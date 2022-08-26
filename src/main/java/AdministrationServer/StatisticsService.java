@@ -69,7 +69,7 @@ public class StatisticsService
     public Response addLocalStats(Statistics localStats)
     {
         System.out.println("Receiving local statistics...");
-        StatisticsManager.getInstance().AddLocalStatistics(localStats);
+        StatisticsManager.getInstance().addLocalStatistics(localStats);
         System.out.println(localStats.toString());
         return Response.ok().build();
     }

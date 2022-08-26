@@ -13,7 +13,7 @@ public class SmartCityManager
     private static SmartCityManager instance;
 
     @XmlElement (name = "taxi_list")
-    private HashMap<Integer, TaxiData> taxiList;
+    private final HashMap<Integer, TaxiData> taxiList;
 
     private SmartCityManager()
     {
@@ -30,8 +30,8 @@ public class SmartCityManager
         return instance;
     }
 
-    public synchronized HashMap<Integer, TaxiData> getTaxiMap()  { return taxiList; }
-    public synchronized ArrayList<TaxiData> getTaxiList()  { return new ArrayList<>(taxiList.values()); }
+    public HashMap<Integer, TaxiData> getTaxiMap()  { return taxiList; }
+    public ArrayList<TaxiData> getTaxiList()  { return new ArrayList<>(taxiList.values()); }
 
     public synchronized boolean addTaxi (TaxiData taxi)
     {
@@ -45,15 +45,17 @@ public class SmartCityManager
         return true;
     }
 
-    public synchronized boolean removeTaxi(Integer id)
+    public boolean removeTaxi(Integer id)
     {
-        if ( taxiList.containsKey(id) )
+        synchronized (taxiList)
         {
-            taxiList.remove(id);
-            System.out.println("Taxi " + id + " removed successfully.\n");
-            return true;
+            if (taxiList.containsKey(id)) {
+                taxiList.remove(id);
+                System.out.println("Taxi " + id + " removed successfully.\n");
+                return true;
+            }
+            System.out.println("Taxi not present on the Smart City.\n");
+            return false;
         }
-        System.out.println("Taxi not present on the Smart City.\n");
-        return false;
     }
 }

@@ -1,5 +1,6 @@
 package TaxiNetwork;
 import AdministrationServer.AddTaxiResponse;
+import AdministrationServer.Statistics;
 import SensorPackage.PM10Buffer;
 import SensorPackage.PM10ReaderThread;
 import SensorPackage.PM10Simulator;
@@ -9,6 +10,7 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class TaxiProcess
 {
@@ -21,7 +23,9 @@ public class TaxiProcess
     {
         // Components
         TaxiData myData = new TaxiData();
-        TaxiActions myActions = new TaxiActions(myData);
+        ArrayList<TaxiData> taxiList;
+        Statistics localStatistics;
+        //TaxiActions myActions = new TaxiActions(myData);
 
 
         // REST Client to communicate with the administration server
@@ -49,7 +53,7 @@ public class TaxiProcess
                                                 AddTaxiResponse.class);
             // Nobody can access myData at this point of the execution so synchronization is not needed
             myData.setPosition(addTaxiResponse.getPosition());
-            myData.setTaxiList(addTaxiResponse.getTaxiList());
+            taxiList = addTaxiResponse.getTaxiList();
 
             System.out.println("Successfully connected to the Smart City.\n");
             System.out.println("Response received from the server:\n" + addTaxiResponse.toString());
@@ -61,13 +65,14 @@ public class TaxiProcess
         }
 
         // === Statistics Threads ===
+        localStatistics = new Statistics(myData);
         PM10Buffer pm10Buffer = new PM10Buffer();
         Thread pm10Sensor = new Thread (new PM10Simulator(pm10Buffer));
-        Thread pm10Reader = new Thread (new PM10ReaderThread(myData.getLocalStatistics(), pm10Buffer));
+        Thread pm10Reader = new Thread (new PM10ReaderThread(localStatistics, pm10Buffer));
         pm10Sensor.start();
         pm10Reader.start();
 
-        TaxiLocalStatisticsThread statisticsThread = new TaxiLocalStatisticsThread(myData.getLocalStatistics());
+        TaxiLocalStatisticsThread statisticsThread = new TaxiLocalStatisticsThread(localStatistics);
         //myActions.SimulateRide();
         statisticsThread.run();
         System.in.read();
