@@ -34,18 +34,11 @@ public class StatisticsManager
         }
     }
 
-    // Taxi list String
-    public String getTaxiListString(ArrayList<TaxiData> taxiList)
+    public synchronized int getLocalStatsCount(int id)
     {
-        if (taxiList.size() == 0)
-            return "Currently there are no taxi connected to the Smart City.";
-
-        StringBuilder taxiListString = new StringBuilder("List of taxis currently located in the Smart City:\n");
-        for (TaxiData taxiData : taxiList)
-        {
-            taxiListString.append("-> ").append(taxiData.toString()).append("\n");
-        }
-        return taxiListString.toString();
+        if (!localStatsList.containsKey(id))
+            return 0;
+        return localStatsList.get(id).size();
     }
 
     // Returns a StatisticsAveragePacket object containing the average
@@ -81,24 +74,23 @@ public class StatisticsManager
         return new AvgStatsResponse(avgTraveledKm, avgBatteryLevel, avgPollutionLevel, accomplishedRides);
     }
 
-    public synchronized int getLocalStatsCount(int id)
-    {
-        if (!localStatsList.containsKey(id))
-            return 0;
-        return localStatsList.get(id).size();
-    }
-
     // Returns a StatisticsAveragePacket object containing the average
     // of all the local statistics received with timestamps between t1 and t2
     public AvgStatsResponse getAverageGlobalStats (long t1, long t2)
     {
-        ArrayList<ArrayList<Statistics>> allTaxiesStats = new ArrayList<>();
+        ArrayList<Statistics> resultStatsList = new ArrayList<>();
         for (int key : localStatsList.keySet())
-            allTaxiesStats.add(localStatsList.get(key));
-
-        if (allTaxiesStats.isEmpty())
         {
-            System.out.println("No local statistics available.");
+            for (Statistics localStat : localStatsList.get(key))
+            {
+                if (localStat.timestamp >= t1 && localStat.timestamp <= t2)
+                    resultStatsList.add(localStat);
+            }
+        }
+
+        if (resultStatsList.isEmpty())
+        {
+            System.out.println("No local statistics available on the selected period.");
             return null;
         }
 
@@ -106,29 +98,37 @@ public class StatisticsManager
         double avgBatteryLevel = 0;
         double avgPollutionLevel = 0;
         int accomplishedRides = 0;
-        int count = 0;
 
-        // For each list of stats for each taxi that has sent at least one
-        for (ArrayList<Statistics> localStatsList : allTaxiesStats)
+        for (Statistics stat : resultStatsList)
         {
-            for (Statistics localStats :  localStatsList)
-            {
-                if (localStats.timestamp >= t1 && localStats.timestamp <= t2)
-                {
-                    avgTraveledKm += localStats.traveledKm;
-                    avgBatteryLevel += localStats.batteryLevel;
-                    for (double pm10Avg : localStats.pm10Averages) {
-                        avgPollutionLevel += pm10Avg;
-                    }
-                    accomplishedRides += localStats.accomplishedRides;
-                    count ++;
-                }
+            double tempPM10Averages = 0.0;
+            avgTraveledKm += stat.traveledKm;
+            avgBatteryLevel += stat.batteryLevel;
+            for (double pm10Avg : stat.pm10Averages) {
+                tempPM10Averages += pm10Avg;
             }
+            tempPM10Averages /= stat.pm10Averages.size();
+            avgPollutionLevel += tempPM10Averages;
+            accomplishedRides += stat.accomplishedRides;
         }
-        avgTraveledKm /= count;
-        avgBatteryLevel /= count;
-        avgPollutionLevel /= count;
+        avgTraveledKm /= resultStatsList.size();
+        avgBatteryLevel /= resultStatsList.size();
+        avgPollutionLevel /= resultStatsList.size();
 
         return new AvgStatsResponse(avgTraveledKm, avgBatteryLevel, avgPollutionLevel, accomplishedRides);
+    }
+
+    // Taxi list String
+    public String getTaxiListString(ArrayList<TaxiData> taxiList)
+    {
+        if (taxiList.size() == 0)
+            return "Currently there are no taxi connected to the Smart City.";
+
+        StringBuilder taxiListString = new StringBuilder("List of taxis currently located in the Smart City:\n");
+        for (TaxiData taxiData : taxiList)
+        {
+            taxiListString.append("-> ").append(taxiData.toString()).append("\n");
+        }
+        return taxiListString.toString();
     }
 }

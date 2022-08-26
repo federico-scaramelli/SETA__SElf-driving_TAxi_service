@@ -22,7 +22,7 @@ public class StatisticsService
 
     @Path("get/avg/last_{n}_from_{id}")
     @GET
-    @Produces( {"application/json", "application/xml", "text/plain"} )
+    @Produces( {"application/json", "application/xml"} )
     public Response getLastNAvgFromSingle(@PathParam("n") int n, @PathParam("id")int id)
     {
         String additionalMsg = "";
@@ -39,6 +39,22 @@ public class StatisticsService
         }
 
         AvgStatsResponse avgResponse = StatisticsManager.getInstance().getAverageLocalStats(id, n);
+        if (avgResponse == null)
+        {
+            return Response.noContent().build();
+        }
+        avgResponse.setAdditionalMessage(additionalMsg);
+        return Response.ok().entity(avgResponse).build();
+    }
+
+    @Path("get/avg/global_from_{t1}_to_{t2}")
+    @GET
+    @Produces( {"application/json", "application/xml"} )
+    public Response getGlobalAvgOnPeriod(@PathParam("t1") long t1, @PathParam("t2") long t2)
+    {
+        String additionalMsg = "";
+
+        AvgStatsResponse avgResponse = StatisticsManager.getInstance().getAverageGlobalStats(t1, t2);
         if (avgResponse == null)
         {
             return Response.noContent().build();
