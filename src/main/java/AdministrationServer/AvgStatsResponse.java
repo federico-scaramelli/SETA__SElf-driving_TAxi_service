@@ -1,5 +1,7 @@
 package AdministrationServer;
 
+import java.util.Objects;
+
 public class AvgStatsResponse
 {
     public AvgStatsResponse() {}
@@ -8,6 +10,7 @@ public class AvgStatsResponse
     public double batteryLevel;
     public double pm10Averages;
     public int accomplishedRides;
+    public String additionalMessage = "";
 
     public AvgStatsResponse(double traveledKm, double batteryLevel, double pollutionLevel, int accomplishedRides)
     {
@@ -17,11 +20,23 @@ public class AvgStatsResponse
         this.accomplishedRides = accomplishedRides;
     }
 
+    public void setAdditionalMessage(String msg)
+    {
+        additionalMessage += msg;
+    }
+
     public String toString()
     {
-        return  "-> Traveled km avg: " + traveledKm +
-                "\n-> Battery level avg: " + batteryLevel +
-                "\n-> PM10 reads avg: " + pm10Averages +
-                "\n-> Accomplished rides: " + accomplishedRides;
+        String s = "";
+
+        if (!Objects.equals(additionalMessage, ""))
+            s = "WARNING: " + additionalMessage + "\n";
+
+        s += "-> Traveled km avg: " + traveledKm +
+           "\n-> Battery level avg: " + batteryLevel +
+           "\n-> PM10 reads avg: " + pm10Averages +
+           "\n-> Accomplished rides: " + accomplishedRides;
+
+        return s;
     }
 }

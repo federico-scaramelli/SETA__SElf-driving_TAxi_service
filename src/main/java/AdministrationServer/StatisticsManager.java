@@ -81,6 +81,13 @@ public class StatisticsManager
         return new AvgStatsResponse(avgTraveledKm, avgBatteryLevel, avgPollutionLevel, accomplishedRides);
     }
 
+    public synchronized int getLocalStatsCount(int id)
+    {
+        if (!localStatsList.containsKey(id))
+            return 0;
+        return localStatsList.get(id).size();
+    }
+
     // Returns a StatisticsAveragePacket object containing the average
     // of all the local statistics received with timestamps between t1 and t2
     public AvgStatsResponse getAverageGlobalStats (long t1, long t2)

@@ -22,11 +22,28 @@ public class StatisticsService
 
     @Path("get/avg/last_{n}_from_{id}")
     @GET
-    @Produces( {"application/json", "application/xml"} )
+    @Produces( {"application/json", "application/xml", "text/plain"} )
     public Response getLastNAvgFromSingle(@PathParam("n") int n, @PathParam("id")int id)
     {
-        AvgStatsResponse avgResponse = StatisticsManager.getInstance().getAverageLocalStats(id, n);
+        String additionalMsg = "";
+        if (StatisticsManager.getInstance().getLocalStatsCount(id) < n)
+        {
+            int m = StatisticsManager.getInstance().getLocalStatsCount(id);
+            if (m == 0)
+            {
+                return Response.noContent().build();
+            }
+            additionalMsg = "There are no " + n + " registered local statistics from taxi " + id +
+                    ".\nReturned the available " + m + " local statistics average.";
+            n = m;
+        }
 
+        AvgStatsResponse avgResponse = StatisticsManager.getInstance().getAverageLocalStats(id, n);
+        if (avgResponse == null)
+        {
+            return Response.noContent().build();
+        }
+        avgResponse.setAdditionalMessage(additionalMsg);
         return Response.ok().entity(avgResponse).build();
     }
 

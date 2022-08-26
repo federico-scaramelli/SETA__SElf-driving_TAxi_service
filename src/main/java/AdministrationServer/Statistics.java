@@ -36,6 +36,7 @@ public class Statistics
     {
         this.taxiData = taxiData;
         this.ID = taxiData.ID;
+        this.batteryLevel = taxiData.batteryLevel;
     }
 
     public synchronized void addTraveledKm(float adding) { traveledKm += adding; }

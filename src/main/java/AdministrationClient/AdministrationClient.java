@@ -21,15 +21,15 @@ public class AdministrationClient
     private static final Gson serializer = new Gson();
 
     static Client client = Client.create();
+    static Scanner scan = new Scanner(System.in);
 
     public static void main(String[] argv)
     {
         System.out.println("\n\nSETA - Administration Interface");
-        showMenu();
+        showMainMenu();
     }
 
-    private static void showMenu() {
-        Scanner scan = new Scanner(System.in);
+    private static void showMainMenu() {
         System.out.println("\nSelect a query: ");
         System.out.println("1 - Taxi list");
         System.out.println("2 - Average of the last N PM10 reads from a specific taxi");
@@ -40,19 +40,15 @@ public class AdministrationClient
             switch (choice){
                 case 1:
                     getTaxiList();
-                    showMenu();
+                    showMainMenu();
                     return;
                 case 2:
-                    System.out.println("Select N: ");
-                    int n = scan.nextInt();
-                    System.out.println("Select ID: ");
-                    int id = scan.nextInt();
-                    getLastLocalAvgStats(n, id);
-                    showMenu();
+                    showGetLastLocalAvgStatsMenu();
+                    showMainMenu();
                     return;
                 case 3:
                     System.out.println("AVG 2");
-                    showMenu();
+                    showMainMenu();
                     return;
                 case 4:
                     System.out.println("Shutting down...");
@@ -60,13 +56,22 @@ public class AdministrationClient
                     return;
                 default:
                     System.out.println("ERROR! Invalid choice.");
-                    showMenu();
+                    showMainMenu();
                     return;
             }
         } catch (InputMismatchException e) {
             System.out.println("ERROR! Invalid choice.");
-            showMenu();
+            showMainMenu();
         }
+    }
+
+    private static void showGetLastLocalAvgStatsMenu()
+    {
+        System.out.println("Select N: ");
+        int n = scan.nextInt();
+        System.out.println("Select ID: ");
+        int id = scan.nextInt();
+        getLastLocalAvgStats(n, id);
     }
 
     public static void getTaxiList()
@@ -115,7 +120,7 @@ public class AdministrationClient
                                                 "/last_" + n + "_from_" + id);
         if (avgStats != null)
         {
-            System.out.println("Last local statistics average received from the server: ");
+            System.out.println("Response received from the server: ");
             System.out.println(avgStats);
         }
     }
@@ -125,6 +130,12 @@ public class AdministrationClient
         try {
             WebResource webResource = client.resource(url);
             ClientResponse clientResponse = webResource.get(ClientResponse.class);
+
+            if (clientResponse.getStatus() == 204)
+            {
+                System.out.println("ERROR! No local statistics available for the requested taxi.");
+                return null;
+            }
 
             if (clientResponse.getStatus() != 200)
             {
