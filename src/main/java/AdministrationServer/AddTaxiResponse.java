@@ -1,8 +1,8 @@
 package AdministrationServer;
 
-import TaxiNetwork.GridCell;
-import TaxiNetwork.GridHelper;
-import TaxiNetwork.TaxiData;
+import SETA.GridCell;
+import SETA.GridHelper;
+import SETA.TaxiData;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -10,19 +10,18 @@ import java.util.Random;
 public class AddTaxiResponse
 {
     ArrayList<TaxiData> taxiList;
-    GridCell position;
-    int startingDistrict;
+    GridCell startingPosition;
 
     public AddTaxiResponse()
     {
         taxiList = new ArrayList<TaxiData>(SmartCityManager.getInstance().getTaxiList());
-        startingDistrict = new Random().nextInt(4) + 1;
-        position = GridHelper.getRechargeStation(startingDistrict);
-        System.out.println(position);
+        int startingDistrict = new Random().nextInt(4) + 1;
+        startingPosition = GridHelper.getRechargeStation(startingDistrict);
+        System.out.println(startingPosition);
     }
 
     public ArrayList<TaxiData> getTaxiList() { return taxiList; }
-    public GridCell getPosition() { return position; }
+    public GridCell getStartingPosition() { return startingPosition; }
 
     public String toString()
     {
@@ -31,6 +30,6 @@ public class AddTaxiResponse
                 //".\n--> Starting assigned district: " +
                 //startingDistrict +
                 ".\n    |--> Starting recharging station cell: " +
-                position;
+                startingPosition;
     }
 }

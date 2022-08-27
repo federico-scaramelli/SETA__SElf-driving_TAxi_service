@@ -1,6 +1,6 @@
 package AdministrationServer;
 
-import TaxiNetwork.TaxiData;
+import SETA.TaxiData;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;

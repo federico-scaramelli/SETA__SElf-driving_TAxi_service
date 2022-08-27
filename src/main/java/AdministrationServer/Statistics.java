@@ -1,6 +1,6 @@
 package AdministrationServer;
 
-import TaxiNetwork.TaxiData;
+import SETA.TaxiData;
 
 import java.text.DateFormat;
 import java.util.ArrayList;

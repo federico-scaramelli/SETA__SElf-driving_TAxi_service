@@ -1,4 +1,6 @@
-package TaxiNetwork;
+package SETA;
+
+import java.util.Random;
 
 public class GridHelper
 {
@@ -41,5 +43,8 @@ public class GridHelper
         return (getRechargeStation(getDistrict(cell)));
     }
 
-
+    public static GridCell getRandomPosition()
+    {
+        return new GridCell(new Random().nextInt(10), new Random().nextInt(10));
+    }
 }

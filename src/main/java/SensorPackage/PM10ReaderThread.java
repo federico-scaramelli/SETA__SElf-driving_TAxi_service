@@ -1,7 +1,6 @@
 package SensorPackage;
 
 import AdministrationServer.Statistics;
-import TaxiNetwork.TaxiData;
 
 import java.util.List;
 

@@ -1,7 +1,7 @@
 package AdministrationClient;
 
 import AdministrationServer.AvgStatsResponse;
-import TaxiNetwork.TaxiData;
+import SETA.TaxiData;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.sun.jersey.api.client.Client;
@@ -11,12 +11,8 @@ import com.sun.jersey.api.client.WebResource;
 
 import java.text.DateFormat;
 import java.time.*;
-import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
-import java.time.format.FormatStyle;
-import java.time.temporal.ChronoField;
 import java.util.*;
 
 public class AdministrationClient
@@ -145,7 +141,7 @@ public class AdministrationClient
                         "--> Info: " + clientResponse.getStatusInfo());
                 return null;
             }
-
+            String json = clientResponse.getEntity(String.class);
             ArrayList<TaxiData> taxiList = serializer.fromJson(
                                               clientResponse.getEntity(String.class),
                                               new TypeToken<ArrayList<TaxiData>>(){}.getType());

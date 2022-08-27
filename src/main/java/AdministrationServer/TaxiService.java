@@ -1,6 +1,6 @@
 package AdministrationServer;
 
-import TaxiNetwork.TaxiData;
+import SETA.TaxiData;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
@@ -20,7 +20,7 @@ public class TaxiService
         if ( smartCity.addTaxi(taxi) )
         {
             AddTaxiResponse response = new AddTaxiResponse();
-            taxi.setPosition(response.getPosition());
+            taxi.setPosition(response.getStartingPosition());
             return Response.ok().entity(response).build();
         }
         return Response.status(Response.Status.CONFLICT).build();

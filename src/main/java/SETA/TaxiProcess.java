@@ -1,4 +1,4 @@
-package TaxiNetwork;
+package SETA;
 import AdministrationServer.AddTaxiResponse;
 import AdministrationServer.Statistics;
 import SensorPackage.PM10Buffer;
@@ -8,6 +8,8 @@ import com.google.gson.Gson;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,7 +17,9 @@ import java.util.ArrayList;
 public class TaxiProcess
 {
     public static final String adminServerAddress = "http://localhost:9797/";
-    public static final String addTaxiPath = "taxi/add";
+    private static final String addTaxiPath = "taxi/add";
+    private static final String brokerAddress = "tcp://localhost:1883";
+    private static final String topicBasePath = "seta/smartcity/rides/district";
 
     private static final Gson serializer = new Gson();
 
@@ -27,6 +31,7 @@ public class TaxiProcess
         Statistics localStatistics;
         //TaxiActions myActions = new TaxiActions(myData);
 
+        // ======= REST CONNECTION AND ADDING REQUEST TO THE SERVER =======
 
         // REST Client to communicate with the administration server
         Client client = Client.create();
@@ -52,7 +57,7 @@ public class TaxiProcess
                                                 clientResponse.getEntity(String.class),
                                                 AddTaxiResponse.class);
             // Nobody can access myData at this point of the execution so synchronization is not needed
-            myData.setPosition(addTaxiResponse.getPosition());
+            myData.setPosition(addTaxiResponse.getStartingPosition());
             taxiList = addTaxiResponse.getTaxiList();
 
             System.out.println("Successfully connected to the Smart City.\n");
@@ -63,6 +68,26 @@ public class TaxiProcess
             System.out.println(e.toString());
             System.exit(0);
         }
+
+
+
+        // ======= MQTT BROKER CONNECTION =======
+        String mqttClientID = MqttClient.generateClientId();
+        MqttClient mqttClient;
+        try {
+            mqttClient = new MqttClient(brokerAddress, mqttClientID);
+        } catch (Exception e) {
+            System.out.println("ERROR! Impossible to create MQTT client instance.");
+            System.out.println(e.toString());
+            System.exit(0);
+        }
+        // Request a persistent session
+        MqttConnectOptions mqttOptions = new MqttConnectOptions();
+        mqttOptions.setCleanSession(true);
+
+
+
+        // ======= EXECUTION OF SECONDARY THREADS =======
 
         // === Statistics Threads ===
         localStatistics = new Statistics(myData);

@@ -5,7 +5,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import TaxiNetwork.TaxiData;
+import SETA.TaxiData;
 
 @XmlRootElement
 public class SmartCityManager
@@ -33,14 +33,16 @@ public class SmartCityManager
     public HashMap<Integer, TaxiData> getTaxiMap()  { return taxiList; }
     public ArrayList<TaxiData> getTaxiList()  { return new ArrayList<>(taxiList.values()); }
 
-    public synchronized boolean addTaxi (TaxiData taxi)
+    public boolean addTaxi (TaxiData taxi)
     {
-        if ( taxiList.containsKey(taxi.getID()) )
+        synchronized (taxiList)
         {
-            System.out.println("ID already present.\n");
-            return false;
+            if (taxiList.containsKey(taxi.getID())) {
+                System.out.println("ID already present.\n");
+                return false;
+            }
+            taxiList.put(taxi.getID(), taxi);
         }
-        taxiList.put(taxi.getID(), taxi);
         System.out.println("Taxi " + taxi.getID() + " added successfully.");
         return true;
     }

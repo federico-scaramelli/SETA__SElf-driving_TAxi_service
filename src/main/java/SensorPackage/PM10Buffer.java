@@ -1,7 +1,5 @@
 package SensorPackage;
 
-import TaxiNetwork.TaxiData;
-
 import java.util.*;
 
 public class PM10Buffer implements Buffer

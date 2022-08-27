@@ -1,7 +1,5 @@
-package TaxiNetwork;
-import AdministrationServer.Statistics;
+package SETA;
 
-import java.util.ArrayList;
 import java.util.Random;
 
 public class TaxiData
@@ -42,12 +40,11 @@ public class TaxiData
         return ID;
     }
     public int getPort() { return port; }
-    public synchronized GridCell getPosition() { return currentPosition; }
-    public synchronized int getBatteryLevel() { return batteryLevel; }
+    public GridCell getPosition() { return currentPosition; }
+    public int getBatteryLevel() { return batteryLevel; }
 
     // === Setters ===
-    public synchronized void setPosition(GridCell position) { this.currentPosition = position; }
-
+    public synchronized void setPosition(GridCell newPosition) { this.currentPosition = newPosition; }
 
     // === Utils ===
     // Print

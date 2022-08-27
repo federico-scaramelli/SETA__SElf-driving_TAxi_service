@@ -1,6 +1,6 @@
 package AdministrationServer;
 
-import TaxiNetwork.TaxiData;
+import SETA.TaxiData;
 
 import java.util.ArrayList;
 import java.util.HashMap;

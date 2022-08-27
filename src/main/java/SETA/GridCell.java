@@ -1,4 +1,6 @@
-package TaxiNetwork;
+package SETA;
+
+import java.util.Objects;
 
 public class GridCell
 {
@@ -18,5 +20,15 @@ public class GridCell
 
     public String toString() {
         return "(" + x + ", " + y + ")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        GridCell pos = (GridCell) o;
+        return x == pos.x && y == pos.y;
     }
 }

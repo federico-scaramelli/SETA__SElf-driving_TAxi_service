@@ -1,4 +1,4 @@
-package TaxiNetwork;
+package SETA;
 
 import AdministrationServer.Statistics;
 import com.google.gson.Gson;
