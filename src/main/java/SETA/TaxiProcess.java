@@ -8,8 +8,7 @@ import com.google.gson.Gson;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,7 +18,8 @@ public class TaxiProcess
     public static final String adminServerAddress = "http://localhost:9797/";
     private static final String addTaxiPath = "taxi/add";
     private static final String brokerAddress = "tcp://localhost:1883";
-    private static final String topicBasePath = "seta/smartcity/rides/district";
+    public static final String topicBasePath = "seta/smartcity/rides/district";
+    public static final int qos = 2;
 
     private static final Gson serializer = new Gson();
 
@@ -29,7 +29,6 @@ public class TaxiProcess
         TaxiData myData = new TaxiData();
         ArrayList<TaxiData> taxiList;
         Statistics localStatistics;
-        //TaxiActions myActions = new TaxiActions(myData);
 
         // ======= REST CONNECTION AND ADDING REQUEST TO THE SERVER =======
 
@@ -70,21 +69,50 @@ public class TaxiProcess
         }
 
 
-
         // ======= MQTT BROKER CONNECTION =======
         String mqttClientID = MqttClient.generateClientId();
-        MqttClient mqttClient;
+        MqttClient mqttClient = null;
+
         try {
             mqttClient = new MqttClient(brokerAddress, mqttClientID);
+            // Request a persistent session
+            MqttConnectOptions mqttOptions = new MqttConnectOptions();
+            mqttOptions.setCleanSession(true);
+            mqttClient.connect(mqttOptions);
+
+            // === Rides thread ===
+            TaxiActions taxiActions = new TaxiActions(myData, mqttClient);
+            taxiActions.start();
+
+            mqttClient.setCallback(new MqttCallback() {
+                @Override
+                public void connectionLost(Throwable cause) {
+                    System.out.println("Connection with the broker lost.");
+                    System.out.println("--> Cause: " + cause.toString());
+                }
+
+                @Override
+                public void messageArrived(String topic, MqttMessage message) throws Exception {
+                    String msg = new String(message.getPayload());
+                    RideRequest rideRequest = serializer.fromJson(msg, RideRequest.class);
+                    taxiActions.myRide = rideRequest;
+                    System.out.println("Received from MQTT broker: " + rideRequest);
+                }
+
+                @Override
+                public void deliveryComplete(IMqttDeliveryToken token) {
+                    System.out.println("Message successfully delivered to the MQTT broker.");
+                }
+            });
+
+            String topic = topicBasePath + GridHelper.getDistrict(myData.getPosition());
+            mqttClient.subscribe(topic, qos);
+            System.out.println("Successfully subscribed to the MQTT broker topic " + topic);
         } catch (Exception e) {
-            System.out.println("ERROR! Impossible to create MQTT client instance.");
+            System.out.println("ERROR! Impossible to connect to the MQTT broker.");
             System.out.println(e.toString());
             System.exit(0);
         }
-        // Request a persistent session
-        MqttConnectOptions mqttOptions = new MqttConnectOptions();
-        mqttOptions.setCleanSession(true);
-
 
 
         // ======= EXECUTION OF SECONDARY THREADS =======
@@ -98,8 +126,12 @@ public class TaxiProcess
         pm10Reader.start();
 
         TaxiLocalStatisticsThread statisticsThread = new TaxiLocalStatisticsThread(localStatistics);
-        //myActions.SimulateRide();
         statisticsThread.run();
+
+        // === Input thread ===
+
+        // === RPC thread ===
+
         System.in.read();
     }
 }

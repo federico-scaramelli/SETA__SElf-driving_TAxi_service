@@ -141,14 +141,15 @@ public class AdministrationClient
                         "--> Info: " + clientResponse.getStatusInfo());
                 return null;
             }
-            String json = clientResponse.getEntity(String.class);
             ArrayList<TaxiData> taxiList = serializer.fromJson(
                                               clientResponse.getEntity(String.class),
-                                              new TypeToken<ArrayList<TaxiData>>(){}.getType());
+                                            new TypeToken<ArrayList<TaxiData>>(){}.getType());
             return taxiList;
 
         } catch (ClientHandlerException e) {
             System.out.println("Server error: " + e);
+            e.getCause();
+            e.printStackTrace();
             return null;
         }
     }

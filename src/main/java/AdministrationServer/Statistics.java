@@ -16,7 +16,7 @@ public class Statistics
     public int ID;
 
     public float traveledKm;
-    public float batteryLevel;
+    public double batteryLevel;
     public List<Double> pm10Averages = new ArrayList<>();
     public int accomplishedRides;
     public long timestamp;
@@ -43,7 +43,7 @@ public class Statistics
     public void addPM10AverageValue(double avg)
     {
         pm10Averages.add(avg);
-        System.out.println("Received new PM10 avg value: " + pm10Averages);
+        //System.out.println("Received new PM10 avg value: " + pm10Averages);
     }
     public void addAccomplishedRide() { accomplishedRides++; }
     public void setTimestamp() { timestamp = System.currentTimeMillis(); }

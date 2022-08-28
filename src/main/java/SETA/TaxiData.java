@@ -13,9 +13,9 @@ public class TaxiData
     public final int port;
 
     // === Working data ===
-    public int batteryLevel = 100;
+    public double batteryLevel = 100.151d;
     public GridCell currentPosition;
-
+    public boolean isRiding = false;
 
     // === Constructors === //
     // Custom ID and port constructor
@@ -41,11 +41,12 @@ public class TaxiData
     }
     public int getPort() { return port; }
     public GridCell getPosition() { return currentPosition; }
-    public int getBatteryLevel() { return batteryLevel; }
+    public double getBatteryLevel() { return batteryLevel; }
+    public void reduceBattery(double reduction) { batteryLevel -= reduction; }
 
     // === Setters ===
     public synchronized void setPosition(GridCell newPosition) { this.currentPosition = newPosition; }
-
+    public void setRidingState(boolean b) { isRiding = b; }
     // === Utils ===
     // Print
     public String toString()
@@ -53,9 +54,11 @@ public class TaxiData
         String s = "Taxi " + ID;
         if (currentPosition != null) {
             s +=  " in position " + currentPosition.toString() +
-            " with a battery level of " + batteryLevel + "%";
+            " with a battery level of " + (int)batteryLevel + "%";
         }
         s += " available at http://" + address + ":" + port + "/";
         return s;
     }
+
+
 }

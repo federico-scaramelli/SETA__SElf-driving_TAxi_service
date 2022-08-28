@@ -17,6 +17,10 @@ public class RideRequest
             destinationPos = GridHelper.getRandomPosition();
     }
 
+    public double getKm (){
+        return GridHelper.getDistance(startingPos, destinationPos);
+    }
+
     public String toString()
     {
         return "Ride request ID " + ID + " from " + startingPos + " to " + destinationPos;
