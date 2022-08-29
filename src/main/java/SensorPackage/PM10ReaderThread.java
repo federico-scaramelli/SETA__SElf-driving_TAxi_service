@@ -29,11 +29,17 @@ public class PM10ReaderThread extends Thread
 
     private void computeAverage(List<Measurement> list)
     {
+        try {
+            if (list.size() > 8) throw new ArrayIndexOutOfBoundsException();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println("ERROR! You're trying to compute a PM10 average of more then 8 values.");
+        }
+
         double avg = 0.0;
         for (Measurement m : list) {
             avg += m.getValue();
         }
-        avg /= 8.0;
+        avg /= list.size();
 
         addAverageToStatistics(avg, stats);
     }

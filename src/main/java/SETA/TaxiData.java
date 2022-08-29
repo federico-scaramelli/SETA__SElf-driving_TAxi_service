@@ -1,5 +1,6 @@
 package SETA;
 
+import java.text.DecimalFormat;
 import java.util.Random;
 
 public class TaxiData
@@ -13,7 +14,7 @@ public class TaxiData
     public final int port;
 
     // === Working data ===
-    public double batteryLevel = 100.151d;
+    public double batteryLevel = 100;
     public GridCell currentPosition;
     public boolean isRiding = false;
 
@@ -46,15 +47,19 @@ public class TaxiData
 
     // === Setters ===
     public synchronized void setPosition(GridCell newPosition) { this.currentPosition = newPosition; }
+    public synchronized void setBattery(double battery) { this.batteryLevel = battery; }
     public void setRidingState(boolean b) { isRiding = b; }
+
+
     // === Utils ===
     // Print
     public String toString()
     {
+        DecimalFormat formatter = new DecimalFormat("#00.0");
         String s = "Taxi " + ID;
         if (currentPosition != null) {
             s +=  " in position " + currentPosition.toString() +
-            " with a battery level of " + (int)batteryLevel + "%";
+            " with a battery level of " + formatter.format(batteryLevel) + "%";
         }
         s += " available at http://" + address + ":" + port + "/";
         return s;

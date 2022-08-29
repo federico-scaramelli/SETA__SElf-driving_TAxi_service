@@ -47,6 +47,20 @@ public class SmartCityManager
         return true;
     }
 
+    public boolean updateTaxi (TaxiData taxi)
+    {
+        synchronized (taxiList)
+        {
+            if (!taxiList.containsKey(taxi.getID())) {
+                System.out.println("ID not registered.\n");
+                return false;
+            }
+            taxiList.put(taxi.getID(), taxi);
+        }
+        System.out.println("Taxi updated successfully!");
+        return true;
+    }
+
     public boolean removeTaxi(Integer id)
     {
         synchronized (taxiList)

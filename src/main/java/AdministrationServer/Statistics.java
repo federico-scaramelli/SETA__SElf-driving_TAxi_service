@@ -15,7 +15,7 @@ public class Statistics
 
     public int ID;
 
-    public float traveledKm;
+    public double traveledKm;
     public double batteryLevel;
     public List<Double> pm10Averages = new ArrayList<>();
     public int accomplishedRides;
@@ -38,15 +38,43 @@ public class Statistics
         this.batteryLevel = taxiData.getBatteryLevel();
     }
 
-    public void addTraveledKm(float adding) { traveledKm += adding; }
-    public void setBatteryLevel(float level) { batteryLevel += level; }
+    public void addRideToStat(double kmIncrement, double newBattery)
+    {
+        synchronized (this) {
+            addTraveledKm(kmIncrement);
+            setBatteryLevel(newBattery);
+            addAccomplishedRide();
+        }
+    }
+
+    private void addTraveledKm(double adding)
+    {
+        /*System.out.println("Updating stats with calm... (10s)");
+        try {
+            Thread.sleep(10000);
+        } catch (Exception e) {
+        }*/
+        traveledKm += adding;
+    }
+
+    private void setBatteryLevel(double level)
+    {
+        batteryLevel = level;
+    }
     public void addPM10AverageValue(double avg)
     {
-        pm10Averages.add(avg);
+        synchronized (this) {
+            pm10Averages.add(avg);
+        }
         //System.out.println("Received new PM10 avg value: " + pm10Averages);
     }
-    public void addAccomplishedRide() { accomplishedRides++; }
-    public void setTimestamp() { timestamp = System.currentTimeMillis(); }
+
+    private void addAccomplishedRide() { accomplishedRides++; }
+
+    public void setTimestamp() {
+        // Not synchronized because I use it only on copies on the local stats and only in a single thread
+        timestamp = System.currentTimeMillis();
+    }
 
     public void resetData()
     {

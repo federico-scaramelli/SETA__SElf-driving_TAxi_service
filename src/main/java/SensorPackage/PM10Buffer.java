@@ -4,7 +4,7 @@ import java.util.*;
 
 public class PM10Buffer implements Buffer
 {
-    private final Queue<Measurement> measurements = new LinkedList<>();
+    private final LinkedList<Measurement> measurements = new LinkedList<>();
 
     public PM10Buffer() {}
 
@@ -49,7 +49,11 @@ public class PM10Buffer implements Buffer
                 list.add(m);
             }
             // Add the remaining 4 values
-            list.addAll(measurements);
+            for (int i = 0; i < 4; i++) {
+                // Add the remaining 4 values keeping them on the buffer
+                Measurement m = measurements.getFirst();
+                list.add(m);
+            }
             //System.out.println("Value sent: " + list);
             //System.out.println("Buffer: " + measurements);
 

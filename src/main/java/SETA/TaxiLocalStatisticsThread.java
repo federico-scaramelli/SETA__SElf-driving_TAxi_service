@@ -6,11 +6,11 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 
-public class TaxiLocalStatisticsThread implements Runnable
+public class TaxiLocalStatisticsThread extends Thread
 {
     public static final String sendLocalStatsPath = "statistics/add";
 
-    Statistics originalStats;
+    final Statistics originalStats;
     Statistics statsCopy;
     Client client = Client.create();
 
@@ -21,6 +21,7 @@ public class TaxiLocalStatisticsThread implements Runnable
         this.originalStats = originalStats;
     }
 
+    @Override
     public void run() {
         while (true) {
             try {

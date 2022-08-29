@@ -1,0 +1,27 @@
+syntax = "proto3";
+package project.taxi.grpc;
+
+message Ack
+{
+    bool ack        = 1;
+}
+
+message StartingTaxiInfo
+{
+    int32 id        = 1;
+    int32 address   = 2;
+    int32 port      = 3;
+    Position pos    = 4;
+    double battery  = 5;
+}
+
+message Position
+{
+    int32 x         = 1;
+    int32 y         = 2;
+}
+
+service Taxi
+{
+    rpc notifyJoin (StartingTaxiInfo) returns (Ack);
+}

@@ -26,6 +26,20 @@ public class TaxiService
         return Response.status(Response.Status.CONFLICT).build();
     }
 
+    @Path("update")
+    @POST
+    @Consumes( {"application/json", "application/xml"} )
+    public Response updateTaxi (TaxiData taxi)
+    {
+        System.out.println("Updating taxi...");
+        SmartCityManager smartCity = SmartCityManager.getInstance();
+        if ( smartCity.updateTaxi(taxi) )
+        {
+            return Response.ok().build();
+        }
+        return Response.status(Response.Status.NOT_FOUND).build();
+    }
+
     @Path("remove/{id}")
     @DELETE
     @Consumes( {"text/plain"} )

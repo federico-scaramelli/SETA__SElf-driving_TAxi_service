@@ -8,6 +8,8 @@ import com.google.gson.Gson;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
+import io.grpc.Server;
+import io.grpc.ServerBuilder;
 import org.eclipse.paho.client.mqttv3.*;
 
 import java.io.IOException;
@@ -27,10 +29,10 @@ public class TaxiProcess
     {
         // Components
         TaxiData myData = new TaxiData();
-        ArrayList<TaxiData> taxiList;
-        Statistics localStatistics;
+        ArrayList<TaxiData> taxiList = null;
+        Statistics localStatistics = null;
 
-        // ======= REST CONNECTION AND ADDING REQUEST TO THE SERVER =======
+        //region ======= REST CONNECTION AND ADDING REQUEST TO THE SERVER =======
 
         // REST Client to communicate with the administration server
         Client client = Client.create();
@@ -67,9 +69,38 @@ public class TaxiProcess
             System.out.println(e.toString());
             System.exit(0);
         }
+        //endregion
+
+        //region ======= Statistics Threads =======
+        localStatistics = new Statistics(myData);
+        PM10Buffer pm10Buffer = new PM10Buffer();
+        Thread pm10Sensor = new Thread (new PM10Simulator(pm10Buffer));
+        Thread pm10Reader = new Thread (new PM10ReaderThread(localStatistics, pm10Buffer));
+        Thread statisticsThread = new Thread(new TaxiLocalStatisticsThread(localStatistics));
+        pm10Sensor.start();
+        pm10Reader.start();
+        statisticsThread.start();
+        //endregion
 
 
-        // ======= MQTT BROKER CONNECTION =======
+
+        //region ======= RPC server start =======
+        Server rpcServer = ServerBuilder.forPort(myData.port).addService(new TaxiImpl(myData, taxiList)).build();
+        rpcServer.start();
+        try {
+            rpcServer.awaitTermination();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // RPC Client
+
+
+        //endregion
+
+
+
+        //region ======= MQTT BROKER CONNECTION =======
         String mqttClientID = MqttClient.generateClientId();
         MqttClient mqttClient = null;
 
@@ -81,7 +112,7 @@ public class TaxiProcess
             mqttClient.connect(mqttOptions);
 
             // === Rides thread ===
-            TaxiActions taxiActions = new TaxiActions(myData, mqttClient);
+            TaxiRideThread taxiActions = new TaxiRideThread(myData, localStatistics, mqttClient);
             taxiActions.start();
 
             mqttClient.setCallback(new MqttCallback() {
@@ -113,20 +144,10 @@ public class TaxiProcess
             System.out.println(e.toString());
             System.exit(0);
         }
+        //endregion
 
 
-        // ======= EXECUTION OF SECONDARY THREADS =======
 
-        // === Statistics Threads ===
-        localStatistics = new Statistics(myData);
-        PM10Buffer pm10Buffer = new PM10Buffer();
-        Thread pm10Sensor = new Thread (new PM10Simulator(pm10Buffer));
-        Thread pm10Reader = new Thread (new PM10ReaderThread(localStatistics, pm10Buffer));
-        pm10Sensor.start();
-        pm10Reader.start();
-
-        TaxiLocalStatisticsThread statisticsThread = new TaxiLocalStatisticsThread(localStatistics);
-        statisticsThread.run();
 
         // === Input thread ===
 
