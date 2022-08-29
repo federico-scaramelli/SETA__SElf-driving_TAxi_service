@@ -6,17 +6,17 @@ public class GridHelper
 {
     public static double getDistance(GridCell a, GridCell b)
     {
-        return Math.sqrt( Math.pow(b.GetX() - a.GetX(), 2) + Math.pow(b.GetY() - a.GetY(), 2) );
+        return Math.sqrt( Math.pow(b.getX() - a.getX(), 2) + Math.pow(b.getY() - a.getY(), 2) );
     }
 
     public static int getDistrict(GridCell cell)
     {
-        if (cell.GetX() < 0 || cell.GetY() < 0 || cell.GetX() > 9 || cell.GetY() > 9)
+        if (cell.getX() < 0 || cell.getY() < 0 || cell.getX() > 9 || cell.getY() > 9)
             return -1;
 
-        if (cell.GetX() < 5 && cell.GetY() < 5)     return 1;
-        if (cell.GetX() >= 5 && cell.GetY() < 5)    return 2;
-        if (cell.GetX() < 5)                        return 3;
+        if (cell.getX() < 5 && cell.getY() < 5)     return 1;
+        if (cell.getX() >= 5 && cell.getY() < 5)    return 2;
+        if (cell.getX() < 5)                        return 3;
         return 4;
     }
 

@@ -1,7 +1,5 @@
 package SETA;
 
-import java.util.Objects;
-
 public class GridCell
 {
     public GridCell() {}
@@ -15,8 +13,8 @@ public class GridCell
         this.y = y;
     }
 
-    public int GetX() { return x; }
-    public int GetY() { return y; }
+    public int getX() { return x; }
+    public int getY() { return y; }
 
     public String toString() {
         return "(" + x + ", " + y + ")";

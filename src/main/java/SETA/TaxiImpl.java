@@ -22,7 +22,7 @@ public class TaxiImpl extends TaxiGrpc.TaxiImplBase
     @Override
     public void notifyJoin(StartingTaxiInfo startingInfo, StreamObserver<Ack> ackStreamObserver)
     {
-        System.out.println("Taxi " + startingInfo.getId() + " has joined the Smart City.");
+        System.out.println("RPC Server (TaxiImpl): Taxi " + startingInfo.getId() + " has joined the Smart City.");
         // I'm passing also the address but for this project it's hard-coded as localhost so I don't use it
         TaxiData newTaxi = new TaxiData(startingInfo.getId(), startingInfo.getPort());
         newTaxi.setPosition(new GridCell(startingInfo.getPos().getX(), startingInfo.getPos().getY()));
@@ -33,11 +33,15 @@ public class TaxiImpl extends TaxiGrpc.TaxiImplBase
             myList.add(newTaxi);
         }
 
-        Ack updateTaxiInfo = Ack.newBuilder()
+        Ack ack = Ack.newBuilder()
                 .setAck(true)
                 .build();
 
-        ackStreamObserver.onNext(updateTaxiInfo);
+        System.out.println(myList);
+
+        // Send the ACK to the client invoking the onNext method
+        ackStreamObserver.onNext(ack);
+
         ackStreamObserver.onCompleted();
     }
 

@@ -38,8 +38,8 @@ public class AdministrationClient
     private static void showMainMenu() {
         System.out.println("\nSelect a query: ");
         System.out.println("1 - Taxi list");
-        System.out.println("2 - Average of the last N PM10 reads from a specific taxi");
-        System.out.println("3 - Average of the PM10 sensors reads occurred on a period");
+        System.out.println("2 - Average of the last N local statistics from a specific taxi");
+        System.out.println("3 - Average of the global statistics average computed on a period");
         System.out.println("4 - Exit");
         try {
             int choice = scan.nextInt();

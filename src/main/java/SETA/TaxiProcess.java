@@ -74,9 +74,9 @@ public class TaxiProcess
         //region ======= Statistics Threads =======
         localStatistics = new Statistics(myData);
         PM10Buffer pm10Buffer = new PM10Buffer();
-        Thread pm10Sensor = new Thread (new PM10Simulator(pm10Buffer));
-        Thread pm10Reader = new Thread (new PM10ReaderThread(localStatistics, pm10Buffer));
-        Thread statisticsThread = new Thread(new TaxiLocalStatisticsThread(localStatistics));
+        PM10Simulator pm10Sensor = new PM10Simulator(pm10Buffer);
+        PM10ReaderThread pm10Reader = new PM10ReaderThread(localStatistics, pm10Buffer);
+        TaxiLocalStatisticsThread statisticsThread = new TaxiLocalStatisticsThread(localStatistics);
         pm10Sensor.start();
         pm10Reader.start();
         statisticsThread.start();
@@ -84,17 +84,20 @@ public class TaxiProcess
 
 
 
-        //region ======= RPC server start =======
+        //region ======= RPC =======
+        // RPC Server
         Server rpcServer = ServerBuilder.forPort(myData.port).addService(new TaxiImpl(myData, taxiList)).build();
+        TaxiRpcServerThread rpcThread = new TaxiRpcServerThread(rpcServer);
         rpcServer.start();
-        try {
-            rpcServer.awaitTermination();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
         // RPC Client
-
+        for (TaxiData t : taxiList)
+        {
+            if (t.getID() != myData.getID()) {
+                TaxiRpcClientThread rpcClient = new TaxiRpcClientThread(myData, t);
+                rpcClient.start();
+            }
+        }
 
         //endregion
 

@@ -9,7 +9,7 @@ message Ack
 message StartingTaxiInfo
 {
     int32 id        = 1;
-    int32 address   = 2;
+    string address   = 2;
     int32 port      = 3;
     Position pos    = 4;
     double battery  = 5;
