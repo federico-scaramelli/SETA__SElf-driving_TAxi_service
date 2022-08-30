@@ -9,12 +9,13 @@ import project.taxi.grpc.TaxiOuterClass;
 
 import java.util.concurrent.TimeUnit;
 
-public class TaxiRpcClientThread extends Thread
+// Thread to invoke an RPC on all the taxis on the network at the time of my entry
+public class TaxiRpcNewJoinThread extends Thread
 {
     TaxiData myData;
     TaxiData otherTaxiServer;
 
-    public TaxiRpcClientThread(TaxiData myData, TaxiData otherTaxiServer)
+    public TaxiRpcNewJoinThread(TaxiData myData, TaxiData otherTaxiServer)
     {
         this.myData = myData;
         this.otherTaxiServer = otherTaxiServer;
@@ -39,11 +40,11 @@ public class TaxiRpcClientThread extends Thread
                         .setBattery(myData.getBatteryLevel())
                         .build();
 
-        // Call the notifyJoin method on the server (TaxiImpl)
+        // Call the notifyJoin method on the server of another taxi
         stub.notifyJoin(info, new StreamObserver<TaxiOuterClass.Ack>() {
             @Override
             public void onNext(TaxiOuterClass.Ack value) {
-                System.out.println("ACK! From " + otherTaxiServer.getID());
+                System.out.println("ACK! From " + otherTaxiServer.getID() + " about [Taxi join]");
             }
 
             @Override
@@ -54,15 +55,9 @@ public class TaxiRpcClientThread extends Thread
 
             @Override
             public void onCompleted() {
-                System.out.println("Completed RPC client");
+                System.out.println("Completed RPC client [Taxi join]");
                 channel.shutdownNow();
             }
         });
-
-        try {
-            channel.awaitTermination(3, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 }

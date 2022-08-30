@@ -8,6 +8,10 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import java.io.IOException;
 
+/*
+{"ID":9778,"startingPos":{"x":9,"y":1},"destinationPos":{"x":5,"y":6}}
+*/
+
 public class Seta
 {
     private static final String brokerAddress = "tcp://localhost:1883";

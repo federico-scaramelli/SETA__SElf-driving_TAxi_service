@@ -6,10 +6,12 @@ message Ack
     bool ack        = 1;
 }
 
+message Null {}
+
 message StartingTaxiInfo
 {
     int32 id        = 1;
-    string address   = 2;
+    string address  = 2;
     int32 port      = 3;
     Position pos    = 4;
     double battery  = 5;
@@ -21,7 +23,17 @@ message Position
     int32 y         = 2;
 }
 
+message CompeteRequestData
+{
+    int32 rideId    = 1;
+    int32 taxiId    = 2;
+    double distance = 3;
+    double battery  = 4;
+}
+
 service Taxi
 {
     rpc notifyJoin (StartingTaxiInfo) returns (Ack);
+    rpc competeForRide (CompeteRequestData) returns (Ack);
+    rpc okTakeRide(Null) returns (Ack);
 }

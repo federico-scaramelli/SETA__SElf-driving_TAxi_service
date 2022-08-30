@@ -1,19 +1,18 @@
 package SETA;
 
 import io.grpc.stub.StreamObserver;
-import javafx.geometry.Pos;
 import project.taxi.grpc.TaxiGrpc;
 import project.taxi.grpc.TaxiOuterClass.*;
 
 import java.util.ArrayList;
 
 // SERVER SIDE
-public class TaxiImpl extends TaxiGrpc.TaxiImplBase
+public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
 {
     TaxiData myData;
     final ArrayList<TaxiData> myList;
 
-    public TaxiImpl(TaxiData myData, ArrayList<TaxiData> myList)
+    public TaxiRpcServerImpl(TaxiData myData, ArrayList<TaxiData> myList)
     {
         this.myData = myData;
         this.myList = myList;
@@ -22,7 +21,7 @@ public class TaxiImpl extends TaxiGrpc.TaxiImplBase
     @Override
     public void notifyJoin(StartingTaxiInfo startingInfo, StreamObserver<Ack> ackStreamObserver)
     {
-        System.out.println("RPC Server (TaxiImpl): Taxi " + startingInfo.getId() + " has joined the Smart City.");
+        System.out.println("RPC Server: Taxi " + startingInfo.getId() + " has joined the Smart City.");
         // I'm passing also the address but for this project it's hard-coded as localhost so I don't use it
         TaxiData newTaxi = new TaxiData(startingInfo.getId(), startingInfo.getPort());
         newTaxi.setPosition(new GridCell(startingInfo.getPos().getX(), startingInfo.getPos().getY()));
@@ -39,10 +38,21 @@ public class TaxiImpl extends TaxiGrpc.TaxiImplBase
 
         System.out.println(myList);
 
-        // Send the ACK to the client invoking the onNext method
+        // Send the ACK to the client
         ackStreamObserver.onNext(ack);
-
         ackStreamObserver.onCompleted();
     }
+
+    @Override
+    public void competeForRide(CompeteRequestData requestData, StreamObserver<Ack> ackStreamObserver)
+    {
+        System.out.println("RPC Server: Received a request to compete for ride " + requestData.getRideId());
+        Ack ack = Ack.newBuilder()
+                .setAck(true)
+                .build();
+
+
+        ackStreamObserver.onNext(ack);
+        ackStreamObserver.onCompleted();    }
 
 }

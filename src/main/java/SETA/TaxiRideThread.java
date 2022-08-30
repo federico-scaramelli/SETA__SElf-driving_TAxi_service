@@ -43,13 +43,12 @@ public class TaxiRideThread extends Thread
             int myDistrict = GridHelper.getDistrict(myData.getPosition());
             System.out.println("Arrived at destination " + myRide.destinationPos);
             myData.setPosition(myRide.destinationPos);
+
             if (GridHelper.getDistrict(myRide.destinationPos) != myDistrict) {
                 // Change topic
                 try {
-                    mqttClient.unsubscribe(TaxiProcess.topicBasePath + myDistrict);
                     myDistrict = GridHelper.getDistrict(myRide.destinationPos);
-                    System.out.println("Changing district to " + myDistrict);
-                    mqttClient.subscribe(TaxiProcess.topicBasePath + myDistrict, TaxiProcess.qos);
+                    TaxiReceiveRideRequestsThread.changeDistrict(myDistrict);
                 } catch (MqttException e) {
                     e.printStackTrace();
                 }
