@@ -48,7 +48,7 @@ public class TaxiRideThread extends Thread
                 // Change topic
                 try {
                     myDistrict = GridHelper.getDistrict(myRide.destinationPos);
-                    TaxiReceiveRideRequestsThread.changeDistrict(myDistrict);
+                    TaxiMqttThread.changeDistrict(myDistrict);
                 } catch (MqttException e) {
                     e.printStackTrace();
                 }

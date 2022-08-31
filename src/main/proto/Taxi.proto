@@ -25,15 +25,22 @@ message Position
 
 message CompeteRequestData
 {
-    int32 rideId    = 1;
-    int32 taxiId    = 2;
-    double distance = 3;
-    double battery  = 4;
+    int32 rideId        = 1;
+    int32 rideDistrict  = 2;
+    int32 taxiId        = 3;
+    double distance     = 4;
+    double battery      = 5;
+}
+
+// Works as an ACK for the competition request communicating in the meanwhile the interest about the ride
+message InterestedToCompetition
+{
+    bool interested = 1;
 }
 
 service Taxi
 {
     rpc notifyJoin (StartingTaxiInfo) returns (Ack);
-    rpc competeForRide (CompeteRequestData) returns (Ack);
+    rpc competeForRide (CompeteRequestData) returns (InterestedToCompetition);
     rpc okTakeRide(Null) returns (Ack);
 }

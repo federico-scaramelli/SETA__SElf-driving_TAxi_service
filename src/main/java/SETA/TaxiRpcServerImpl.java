@@ -21,7 +21,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
     @Override
     public void notifyJoin(StartingTaxiInfo startingInfo, StreamObserver<Ack> ackStreamObserver)
     {
-        System.out.println("RPC Server: Taxi " + startingInfo.getId() + " has joined the Smart City.");
+        System.out.println("\nRPC Server: Taxi " + startingInfo.getId() + " has joined the Smart City.");
         // I'm passing also the address but for this project it's hard-coded as localhost so I don't use it
         TaxiData newTaxi = new TaxiData(startingInfo.getId(), startingInfo.getPort());
         newTaxi.setPosition(new GridCell(startingInfo.getPos().getX(), startingInfo.getPos().getY()));
@@ -44,15 +44,30 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
     }
 
     @Override
-    public void competeForRide(CompeteRequestData requestData, StreamObserver<Ack> ackStreamObserver)
+    public void competeForRide(CompeteRequestData requestData,
+                               StreamObserver<InterestedToCompetition> ackStreamObserver)
     {
-        System.out.println("RPC Server: Received a request to compete for ride " + requestData.getRideId());
-        Ack ack = Ack.newBuilder()
-                .setAck(true)
-                .build();
+        System.out.println("RPC Server: Received a request from " + requestData.getTaxiId()
+                                        + " to compete for ride " + requestData.getRideId());
 
+        if (GridHelper.getDistrict(myData.getPosition()) != requestData.getRideDistrict()
+                || myData.getBatteryLevel() <= 30
+                || myData.isRiding)
+        {
+            InterestedToCompetition ack = InterestedToCompetition.newBuilder()
+                    .setInterested(false)
+                    .build();
+            ackStreamObserver.onNext(ack);
+        } else {
+            InterestedToCompetition ack = InterestedToCompetition.newBuilder()
+                    .setInterested(true)
+                    .build();
+            ackStreamObserver.onNext(ack);
+        }
 
-        ackStreamObserver.onNext(ack);
-        ackStreamObserver.onCompleted();    }
+        //try {Thread.sleep(7000);}catch (Exception e){}
+
+        ackStreamObserver.onCompleted();
+    }
 
 }

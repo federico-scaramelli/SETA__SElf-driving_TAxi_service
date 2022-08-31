@@ -55,7 +55,7 @@ public class TaxiRpcNewJoinThread extends Thread
 
             @Override
             public void onCompleted() {
-                System.out.println("Completed RPC client [Taxi join]");
+                //System.out.println("Completed RPC client [Taxi join]");
                 channel.shutdownNow();
             }
         });

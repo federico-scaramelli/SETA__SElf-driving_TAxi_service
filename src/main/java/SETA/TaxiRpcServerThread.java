@@ -17,7 +17,7 @@ public class TaxiRpcServerThread extends Thread
     {
         try {
             rpcServer.start();
-            System.out.println("RPC Server started.");
+            System.out.println("\nRPC Server started.");
             rpcServer.awaitTermination();
             System.out.println("RPC Server terminated.");
         } catch (InterruptedException | IOException e) {

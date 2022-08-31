@@ -4,7 +4,7 @@ import AdministrationServer.Statistics;
 import com.google.gson.Gson;
 import org.eclipse.paho.client.mqttv3.*;
 
-public class TaxiReceiveRideRequestsThread extends Thread
+public class TaxiMqttThread extends Thread
 {
     private static final String brokerAddress = "tcp://localhost:1883";
     private static final Gson serializer = new Gson();
@@ -17,7 +17,7 @@ public class TaxiReceiveRideRequestsThread extends Thread
     static MqttClient mqttClient = null;
     static String topic = null;
 
-    public TaxiReceiveRideRequestsThread(TaxiData myData, Statistics localStatistics)
+    public TaxiMqttThread(TaxiData myData, Statistics localStatistics)
     {
         this.myData = myData;
         this.localStatistics = localStatistics;
@@ -42,7 +42,7 @@ public class TaxiReceiveRideRequestsThread extends Thread
             mqttClient.setCallback(new MqttCallback() {
                 @Override
                 public void connectionLost(Throwable cause) {
-                    System.out.println("Connection with the broker lost.");
+                    System.out.println("\nConnection with the broker lost.");
                     System.out.println("--> Cause: " + cause.toString());
                 }
 
@@ -61,9 +61,9 @@ public class TaxiReceiveRideRequestsThread extends Thread
 
             topic = topicBasePath + GridHelper.getDistrict(myData.getPosition());
             mqttClient.subscribe(topic, qos);
-            System.out.println("Successfully subscribed to the MQTT broker topic " + topic);
+            System.out.println("\nSuccessfully subscribed to the MQTT broker topic " + topic);
         } catch (Exception e) {
-            System.out.println("ERROR! Impossible to connect to the MQTT broker.");
+            System.out.println("\nERROR! Impossible to connect to the MQTT broker.");
             System.out.println(e.toString());
             System.exit(0);
         }
@@ -82,6 +82,6 @@ public class TaxiReceiveRideRequestsThread extends Thread
         mqttClient.unsubscribe(topic);
         System.out.println("Changing district to " + district);
         topic = topicBasePath + district;
-        mqttClient.subscribe(topic, TaxiReceiveRideRequestsThread.qos);
+        mqttClient.subscribe(topic, TaxiMqttThread.qos);
     }
 }
