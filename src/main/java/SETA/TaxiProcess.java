@@ -25,7 +25,8 @@ public class TaxiProcess
     private static TaxiData myData = new TaxiData();
     private static Statistics localStatistics = null;
 
-    public static ArrayList<TaxiData> currentCompetitors = null;
+    public final static ArrayList<TaxiData> currentCompetitors = new ArrayList<>();
+    private static TaxiRideThread taxiRideThread = null;
 
     public static void main(String[] argv) throws IOException
     {
@@ -98,11 +99,9 @@ public class TaxiProcess
         //endregion
 
 
-
         //======= MQTT BROKER CONNECTION =======
         TaxiMqttThread mqttThread = new TaxiMqttThread(myData, localStatistics);
         mqttThread.start();
-        currentCompetitors = new ArrayList<>();
 
 
 
@@ -114,12 +113,21 @@ public class TaxiProcess
         System.in.read();
     }
 
-    public static void startCompetition(RideRequest request)
+    public static void joinCompetition(RideRequest request)
     {
+        currentCompetitors.clear();
+        currentCompetitors.addAll(taxiList);
         for (TaxiData t : taxiList)
         {
             TaxiRpcCompetitionThread competitionThread = new TaxiRpcCompetitionThread(myData, t, request);
             competitionThread.start();
         }
+    }
+
+    public static void startRide(RideRequest request)
+    {
+        // === Rides thread ===
+        taxiRideThread = new TaxiRideThread(myData, localStatistics, request);
+        taxiRideThread.start();
     }
 }

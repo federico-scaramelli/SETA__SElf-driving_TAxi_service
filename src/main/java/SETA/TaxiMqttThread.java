@@ -13,7 +13,6 @@ public class TaxiMqttThread extends Thread
 
     public TaxiData myData;
     public Statistics localStatistics;
-    TaxiRideThread taxiActions = null;
     static MqttClient mqttClient = null;
     static String topic = null;
 
@@ -34,10 +33,6 @@ public class TaxiMqttThread extends Thread
             MqttConnectOptions mqttOptions = new MqttConnectOptions();
             mqttOptions.setCleanSession(true);
             mqttClient.connect(mqttOptions);
-
-            // === Rides thread ===
-            taxiActions = new TaxiRideThread(myData, localStatistics, mqttClient);
-            taxiActions.start();
 
             mqttClient.setCallback(new MqttCallback() {
                 @Override
@@ -72,10 +67,13 @@ public class TaxiMqttThread extends Thread
     private void handleRideRequestReceiving(RideRequest rideRequest)
     {
         System.out.println("Received from MQTT broker: " + rideRequest);
-        TaxiProcess.startCompetition(rideRequest);
-
-
-        //taxiActions.myRide = rideRequest;
+        // Ignore the ride request if you are not available
+        if (myData.isRiding || myData.getBatteryLevel() <= 30)
+        {
+            System.out.println("Request " + rideRequest + " ignored.");
+        } else {
+            TaxiProcess.joinCompetition(rideRequest);
+        }
     }
 
     public static void changeDistrict(int district) throws MqttException {

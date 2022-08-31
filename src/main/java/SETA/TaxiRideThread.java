@@ -17,20 +17,19 @@ public class TaxiRideThread extends Thread
     private final TaxiData myData;
     private final Statistics myLocalStats;
     volatile public RideRequest myRide = null;
-    private final MqttClient mqttClient;
 
-    public TaxiRideThread(TaxiData myTaxi, Statistics myLocalStats, MqttClient mqttClient)
+    public TaxiRideThread(TaxiData myTaxi, Statistics myLocalStats, RideRequest ride)
     {
         this.myData = myTaxi;
         this.myLocalStats = myLocalStats;
-        this.mqttClient = mqttClient;
+        this.myRide = ride;
     }
 
     @Override
     public void run() {
-        while(true)
+        //while(true)
         {
-            if (myRide == null) continue;
+            //if (myRide == null) continue;
 
             System.out.println("Driving thread started. Executing ride...");
             myData.setRidingState(true);
@@ -57,7 +56,7 @@ public class TaxiRideThread extends Thread
             UpdateData();
             SendUpdateToRestServer();
 
-            myRide = null;
+            //myRide = null;
             System.out.println(myData);
         }
     }

@@ -12,22 +12,20 @@ public class TaxiRpcCompetitionThread extends Thread
     TaxiData myData;
     TaxiData otherTaxiServer;
     RideRequest request;
-    private int count = 0;
+    private int requestCount = 0;
     private int requestTryingLimit = 3;
+    final ManagedChannel channel;
 
     public TaxiRpcCompetitionThread(TaxiData myData, TaxiData otherTaxiServer, RideRequest request)
     {
         this.myData = myData;
         this.otherTaxiServer = otherTaxiServer;
         this.request = request;
-    }
+        channel = ManagedChannelBuilder.forTarget("localhost:" + otherTaxiServer.getPort()).usePlaintext().build();}
 
     @Override
     public void run()
     {
-        final ManagedChannel channel =
-                ManagedChannelBuilder.forTarget("localhost:" + otherTaxiServer.getPort()).usePlaintext().build();
-
         // Creating an asynchronous stub on the channel
         TaxiGrpc.TaxiStub stub = TaxiGrpc.newStub(channel);
 
@@ -47,8 +45,19 @@ public class TaxiRpcCompetitionThread extends Thread
                 boolean interest = interestToComp.getInterested();
                 System.out.println("ACK [" + interest + "]! From " + otherTaxiServer.getID()
                         + " about [Ride " + request.ID + " competition]");
-                if (interest)
-                    TaxiProcess.currentCompetitors.add(otherTaxiServer);
+                // Remove from the list not interested or losing taxis
+                if (!interest)
+                {
+                    synchronized (TaxiProcess.currentCompetitors) {
+                        TaxiProcess.currentCompetitors.remove(otherTaxiServer);
+                    }
+                }
+                // If my taxi is the only competitor remained, take the ride
+                if (TaxiProcess.currentCompetitors.size() == 1
+                    && TaxiProcess.currentCompetitors.contains(myData))
+                {
+                    TaxiProcess.startRide(request);
+                }
             }
 
             @Override
@@ -56,8 +65,8 @@ public class TaxiRpcCompetitionThread extends Thread
                 System.out.println("ERROR! " + t.getCause());
 
                 System.out.println("TIMEOUT! No ACK received from " + otherTaxiServer.getID() +
-                        "\nThis was the request " + count + "...");
-                if (count < requestTryingLimit) {
+                        "\nThis was the request " + requestCount + "...");
+                if (requestCount < requestTryingLimit) {
                     System.out.println("\nSending a new request to compete...");
                     channel.shutdownNow();
                     run();
@@ -72,7 +81,6 @@ public class TaxiRpcCompetitionThread extends Thread
                 channel.shutdown();
             }
         });
-        count++;
+        requestCount++;
     }
-
 }

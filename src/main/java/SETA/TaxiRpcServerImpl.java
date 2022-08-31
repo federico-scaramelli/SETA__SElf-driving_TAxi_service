@@ -52,13 +52,18 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
 
         if (GridHelper.getDistrict(myData.getPosition()) != requestData.getRideDistrict()
                 || myData.getBatteryLevel() <= 30
-                || myData.isRiding)
+                || myData.isRiding
+                || myData.getBatteryLevel() < requestData.getBattery()
+                || (myData.getBatteryLevel() == requestData.getBattery()
+                && myData.getID() < requestData.getTaxiId()))
         {
+            System.out.println("I'm not interested on the request " + requestData.getRideId());
             InterestedToCompetition ack = InterestedToCompetition.newBuilder()
                     .setInterested(false)
                     .build();
             ackStreamObserver.onNext(ack);
         } else {
+            System.out.println("I'm interested on the request " + requestData.getRideId());
             InterestedToCompetition ack = InterestedToCompetition.newBuilder()
                     .setInterested(true)
                     .build();
