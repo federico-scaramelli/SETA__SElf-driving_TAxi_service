@@ -37,11 +37,16 @@ public class TaxiRpcCompetitionThread extends Thread
                 .setDistance(GridHelper.getDistance(myData.getPosition(), request.startingPos))
                 .build();
 
+        /*if (myData.getID() < otherTaxiServer.getID() && myData.getPosition() != otherTaxiServer.getPosition())
+            try { Thread.sleep(5000); } catch (Exception e) {}*/
+
         // Call the competeForRide method on the server of another taxi
         stub.withDeadlineAfter(5, TimeUnit.SECONDS)
-                .competeForRide(requestData, new StreamObserver<InterestedToCompetition>() {
+            .competeForRide(requestData, new StreamObserver<InterestedToCompetition>()
+        {
             @Override
-            public void onNext(InterestedToCompetition interestToComp) {
+            public void onNext(InterestedToCompetition interestToComp)
+            {
                 boolean interest = interestToComp.getInterested();
                 System.out.println("ACK [" + interest + "]! From " + otherTaxiServer.getID()
                         + " about [Ride " + request.ID + " competition]");
@@ -52,22 +57,14 @@ public class TaxiRpcCompetitionThread extends Thread
                         TaxiProcess.currentCompetitors.remove(otherTaxiServer);
                     }
                 }
-                // If my taxi is the only competitor remained, take the ride
-                if (TaxiProcess.currentCompetitors.size() == 1
-                    && TaxiProcess.currentCompetitors.contains(myData))
-                {
-                    TaxiProcess.startRide(request);
-                }
             }
 
             @Override
             public void onError(Throwable t) {
-                System.out.println("ERROR! " + t.getCause());
-
-                System.out.println("TIMEOUT! No ACK received from " + otherTaxiServer.getID() +
+                System.out.println("\nTIMEOUT! No ACK received from " + otherTaxiServer.getID() +
                         "\nThis was the request " + requestCount + "...");
                 if (requestCount < requestTryingLimit) {
-                    System.out.println("\nSending a new request to compete...");
+                    System.out.println("Sending a new request to compete...");
                     channel.shutdownNow();
                     run();
                 } else {
@@ -79,6 +76,19 @@ public class TaxiRpcCompetitionThread extends Thread
             public void onCompleted() {
                 //System.out.println("Completed RPC client [Ride " + request.ID + " competition]");
                 channel.shutdown();
+
+                // Ride already taken
+                if (myData.isRiding)
+                    return;
+
+                // If my taxi is the only competitor remained, take the ride
+                // System.out.println("COMPETITORS REMAINED: " + TaxiProcess.currentCompetitors);
+                /*if (TaxiProcess.currentCompetitors.size() == 1
+                    && TaxiProcess.currentCompetitors.get(0).getID() == myData.getID())*/
+                if (TaxiProcess.currentCompetitors.isEmpty())
+                {
+                    TaxiProcess.startRide(request);
+                }
             }
         });
         requestCount++;

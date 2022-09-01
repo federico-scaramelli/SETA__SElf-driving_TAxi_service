@@ -32,7 +32,7 @@ public class TaxiData
     // Random ID and port constructor
     public TaxiData()
     {
-        this (new Random().nextInt(1001) - 1,
+        this (new Random().nextInt(1000) + 1,
                 new Random().nextInt(65536 - 9797) + 9797);
     }
 

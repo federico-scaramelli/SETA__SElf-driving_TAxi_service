@@ -31,7 +31,7 @@ public class TaxiRideThread extends Thread
         {
             //if (myRide == null) continue;
 
-            System.out.println("Driving thread started. Executing ride...");
+            System.out.println("\nDriving thread started. Executing ride...");
             myData.setRidingState(true);
             try {
                 Thread.sleep(5000);

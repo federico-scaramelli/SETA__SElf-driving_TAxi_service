@@ -32,6 +32,12 @@ message CompeteRequestData
     double battery      = 5;
 }
 
+message RideRequest
+{
+    int32 rideId            = 1;
+    Position startingPos    = 2;
+}
+
 // Works as an ACK for the competition request communicating in the meanwhile the interest about the ride
 message InterestedToCompetition
 {

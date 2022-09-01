@@ -47,32 +47,76 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
     public void competeForRide(CompeteRequestData requestData,
                                StreamObserver<InterestedToCompetition> ackStreamObserver)
     {
-        System.out.println("RPC Server: Received a request from " + requestData.getTaxiId()
+        System.out.println("\nRPC Server: Received a request from " + requestData.getTaxiId()
                                         + " to compete for ride " + requestData.getRideId());
 
+        // If it's a request from myself, answer false
+        if (requestData.getTaxiId() == myData.getID())
+        {
+            System.out.println("Ride " + requestData.getRideId() + " received from myself.");
+            sendInterest(false, ackStreamObserver);
+            return;
+        }
+
+        // If you are from another district, or you are not available, send negative interest ack
         if (GridHelper.getDistrict(myData.getPosition()) != requestData.getRideDistrict()
-                || myData.getBatteryLevel() <= 30
-                || myData.isRiding
-                || myData.getBatteryLevel() < requestData.getBattery()
+            || myData.getBatteryLevel() <= 30
+            || (myData.isRiding && TaxiProcess.currentRideRequest.ID != requestData.getRideId()))
+        {
+            System.out.println("I'm not available for the request " + requestData.getRideId());
+            sendInterest(false, ackStreamObserver);
+            return;
+        }
+
+        // If you are in the same district, but you have not received the request from mqtt
+        if (TaxiProcess.currentRideRequest == null)
+        {
+            System.out.println("RPC Server: Ride request " + requestData.getRideId() + " not-received from MQTT.\n" +
+                    "Waiting for it from MQTT.");
+            // QoS is 2, so I'll receive the request. Wait for it!
+            while (TaxiProcess.currentRideRequest == null) {
+                try { Thread.sleep(100); } catch (Exception e) {}
+            }
+        }
+        // If there is a difference between last received ride request from mqtt and the one received from RPC
+        if (TaxiProcess.currentRideRequest.ID != requestData.getRideId())
+        {
+            System.out.println("RPC Server [WARNING!]: Ride request " + requestData.getRideId() +
+                    " is different from the one received by MQTT.\n" +
+                    "I'm not interested to this request.");
+            sendInterest(false, ackStreamObserver);
+            return;
+        }
+
+        // Actual competition
+        if (GridHelper.getDistance(myData.getPosition(),
+                TaxiProcess.currentRideRequest.startingPos) > requestData.getDistance())
+        {
+            System.out.println("I lost the competition for the ride " + requestData.getRideId());
+            sendInterest(false, ackStreamObserver);
+            return;
+        }
+
+        if (myData.getBatteryLevel() < requestData.getBattery()
                 || (myData.getBatteryLevel() == requestData.getBattery()
                 && myData.getID() < requestData.getTaxiId()))
         {
-            System.out.println("I'm not interested on the request " + requestData.getRideId());
-            InterestedToCompetition ack = InterestedToCompetition.newBuilder()
-                    .setInterested(false)
-                    .build();
-            ackStreamObserver.onNext(ack);
+            System.out.println("I lost the competition for the ride " + requestData.getRideId());
+            sendInterest(false, ackStreamObserver);
         } else {
-            System.out.println("I'm interested on the request " + requestData.getRideId());
-            InterestedToCompetition ack = InterestedToCompetition.newBuilder()
-                    .setInterested(true)
-                    .build();
-            ackStreamObserver.onNext(ack);
+            System.out.println("I'm competing for the ride " + requestData.getRideId());
+            sendInterest(true, ackStreamObserver);
         }
 
         //try {Thread.sleep(7000);}catch (Exception e){}
-
-        ackStreamObserver.onCompleted();
     }
 
+    private void sendInterest (boolean interest, StreamObserver<InterestedToCompetition> ackStreamObserver)
+    {
+        InterestedToCompetition ack = InterestedToCompetition.newBuilder()
+                .setInterested(interest)
+                .build();
+        ackStreamObserver.onNext(ack);
+        ackStreamObserver.onCompleted();
+    }
 }

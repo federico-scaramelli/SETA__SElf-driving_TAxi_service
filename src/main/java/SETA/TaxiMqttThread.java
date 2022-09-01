@@ -66,7 +66,7 @@ public class TaxiMqttThread extends Thread
 
     private void handleRideRequestReceiving(RideRequest rideRequest)
     {
-        System.out.println("Received from MQTT broker: " + rideRequest);
+        System.out.println("\nReceived from MQTT broker: " + rideRequest);
         // Ignore the ride request if you are not available
         if (myData.isRiding || myData.getBatteryLevel() <= 30)
         {

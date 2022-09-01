@@ -27,6 +27,7 @@ public class TaxiProcess
 
     public final static ArrayList<TaxiData> currentCompetitors = new ArrayList<>();
     private static TaxiRideThread taxiRideThread = null;
+    public static RideRequest currentRideRequest = null;
 
     public static void main(String[] argv) throws IOException
     {
@@ -84,7 +85,8 @@ public class TaxiProcess
 
         //region ======= RPC =======
         // RPC Server
-        Server rpcServer = ServerBuilder.forPort(myData.port).addService(new TaxiRpcServerImpl(myData, taxiList)).build();
+        Server rpcServer = ServerBuilder.forPort(myData.port)
+                .addService(new TaxiRpcServerImpl(myData, taxiList)).build();
         TaxiRpcServerThread rpcThread = new TaxiRpcServerThread(rpcServer);
         rpcThread.start();
 
@@ -115,6 +117,8 @@ public class TaxiProcess
 
     public static void joinCompetition(RideRequest request)
     {
+        currentRideRequest = request;
+
         currentCompetitors.clear();
         currentCompetitors.addAll(taxiList);
         for (TaxiData t : taxiList)
@@ -126,8 +130,12 @@ public class TaxiProcess
 
     public static void startRide(RideRequest request)
     {
+        myData.setRidingState(true);
+
         // === Rides thread ===
         taxiRideThread = new TaxiRideThread(myData, localStatistics, request);
         taxiRideThread.start();
+
+        currentRideRequest = null;
     }
 }
