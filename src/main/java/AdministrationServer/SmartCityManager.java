@@ -5,7 +5,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import SETA.TaxiData;
+import SETA.Taxi.TaxiData;
 
 @XmlRootElement
 public class SmartCityManager

@@ -1,5 +1,6 @@
-package SETA;
+package SETA.Taxi;
 
+import Utils.GridHelper;
 import io.grpc.stub.StreamObserver;
 import project.taxi.grpc.TaxiGrpc;
 import project.taxi.grpc.TaxiOuterClass.*;

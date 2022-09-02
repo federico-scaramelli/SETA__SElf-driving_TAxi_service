@@ -1,6 +1,7 @@
-package AdministrationServer;
+package AdministrationServer.StatisticsService;
 
-import SETA.TaxiData;
+import AdministrationServer.SmartCityManager;
+import SETA.Taxi.TaxiData;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;

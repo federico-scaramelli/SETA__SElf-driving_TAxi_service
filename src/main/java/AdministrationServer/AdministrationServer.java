@@ -4,7 +4,7 @@ import com.sun.jersey.api.container.httpserver.HttpServerFactory;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 
-public class MainServer
+public class AdministrationServer
 {
     public final static String IP = "localhost";
     public final static int PORT = 9797;

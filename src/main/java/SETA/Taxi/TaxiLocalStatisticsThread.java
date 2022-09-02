@@ -1,6 +1,6 @@
-package SETA;
+package SETA.Taxi;
 
-import AdministrationServer.Statistics;
+import AdministrationServer.StatisticsService.Statistics;
 import com.google.gson.Gson;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;

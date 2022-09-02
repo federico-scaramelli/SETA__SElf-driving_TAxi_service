@@ -1,4 +1,4 @@
-package SETA;
+package SETA.Taxi;
 
 import java.text.DecimalFormat;
 import java.util.Random;

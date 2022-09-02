@@ -1,4 +1,4 @@
-package SETA;
+package SETA.Taxi;
 
 public class GridCell
 {

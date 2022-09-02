@@ -1,11 +1,12 @@
-package SETA;
+package SETA.Taxi;
 
-import AdministrationServer.Statistics;
+import AdministrationServer.StatisticsService.Statistics;
+import Utils.GridHelper;
+import SETA.RideRequest;
 import com.google.gson.Gson;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
-import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 
 public class TaxiRideThread extends Thread
@@ -47,7 +48,7 @@ public class TaxiRideThread extends Thread
                 // Change topic
                 try {
                     myDistrict = GridHelper.getDistrict(myRide.destinationPos);
-                    TaxiMqttThread.changeDistrict(myDistrict);
+                    TaxiMqttThread.changeTopic(myDistrict);
                 } catch (MqttException e) {
                     e.printStackTrace();
                 }

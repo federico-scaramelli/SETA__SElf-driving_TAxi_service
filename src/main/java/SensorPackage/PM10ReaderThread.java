@@ -1,6 +1,6 @@
 package SensorPackage;
 
-import AdministrationServer.Statistics;
+import AdministrationServer.StatisticsService.Statistics;
 
 import java.util.List;
 

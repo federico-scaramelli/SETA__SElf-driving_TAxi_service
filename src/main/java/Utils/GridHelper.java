@@ -1,4 +1,6 @@
-package SETA;
+package Utils;
+
+import SETA.Taxi.GridCell;
 
 import java.util.Random;
 

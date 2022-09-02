@@ -1,4 +1,4 @@
-package SETA;
+package SETA.Taxi;
 
 import io.grpc.Server;
 

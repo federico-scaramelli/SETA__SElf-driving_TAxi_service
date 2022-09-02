@@ -1,4 +1,4 @@
-package AdministrationServer;
+package AdministrationServer.StatisticsService;
 
 import java.util.Objects;
 

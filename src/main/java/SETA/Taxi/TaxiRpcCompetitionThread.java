@@ -1,5 +1,7 @@
-package SETA;
+package SETA.Taxi;
 
+import Utils.GridHelper;
+import SETA.RideRequest;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
@@ -11,7 +13,7 @@ public class TaxiRpcCompetitionThread extends Thread
 {
     TaxiData myData;
     TaxiData otherTaxiServer;
-    RideRequest request;
+    SETA.RideRequest request;
     private int requestCount = 0;
     private int requestTryingLimit = 3;
     final ManagedChannel channel;

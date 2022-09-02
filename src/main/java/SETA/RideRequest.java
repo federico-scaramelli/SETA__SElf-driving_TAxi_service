@@ -1,5 +1,8 @@
 package SETA;
 
+import SETA.Taxi.GridCell;
+import Utils.GridHelper;
+
 import java.util.Random;
 
 public class RideRequest
@@ -23,6 +26,7 @@ public class RideRequest
 
     public String toString()
     {
-        return "Ride request ID " + ID + " from " + startingPos + " to " + destinationPos;
+        return "Ride request ID " + ID + " from " + startingPos + " to " + destinationPos +
+                ". [district " + GridHelper.getDistrict(startingPos) + "]";
     }
 }

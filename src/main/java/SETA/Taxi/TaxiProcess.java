@@ -1,6 +1,7 @@
-package SETA;
-import AdministrationServer.AddTaxiResponse;
-import AdministrationServer.Statistics;
+package SETA.Taxi;
+import AdministrationServer.TaxiService.AddTaxiResponse;
+import AdministrationServer.StatisticsService.Statistics;
+import SETA.RideRequest;
 import SensorPackage.PM10Buffer;
 import SensorPackage.PM10ReaderThread;
 import SensorPackage.PM10Simulator;

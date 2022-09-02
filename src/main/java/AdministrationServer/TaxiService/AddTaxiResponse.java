@@ -1,8 +1,9 @@
-package AdministrationServer;
+package AdministrationServer.TaxiService;
 
-import SETA.GridCell;
-import SETA.GridHelper;
-import SETA.TaxiData;
+import AdministrationServer.SmartCityManager;
+import SETA.Taxi.GridCell;
+import Utils.GridHelper;
+import SETA.Taxi.TaxiData;
 
 import java.util.ArrayList;
 import java.util.Random;

@@ -1,6 +1,8 @@
-package SETA;
+package SETA.Taxi;
 
-import AdministrationServer.Statistics;
+import AdministrationServer.StatisticsService.Statistics;
+import Utils.GridHelper;
+import SETA.RideRequest;
 import com.google.gson.Gson;
 import org.eclipse.paho.client.mqttv3.*;
 
@@ -50,6 +52,7 @@ public class TaxiMqttThread extends Thread
 
                 @Override
                 public void deliveryComplete(IMqttDeliveryToken token) {
+                    // Actually not working because I don't send ACK
                     System.out.println("Message successfully delivered to the MQTT broker.");
                 }
             });
@@ -76,7 +79,14 @@ public class TaxiMqttThread extends Thread
         }
     }
 
-    public static void changeDistrict(int district) throws MqttException {
+    public void notifySetaRequestTaken(int rideId) throws MqttException {
+        MqttMessage message = new MqttMessage(Integer.toString(rideId).getBytes());
+        message.setQos(qos);
+        System.out.println("\nNotifying SETA about ride request " + rideId + " taken in charge.");
+        mqttClient.publish(topic, message);
+    }
+
+    public static void changeTopic(int district) throws MqttException {
         mqttClient.unsubscribe(topic);
         System.out.println("Changing district to " + district);
         topic = topicBasePath + district;

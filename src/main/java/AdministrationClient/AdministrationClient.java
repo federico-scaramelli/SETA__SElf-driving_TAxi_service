@@ -1,7 +1,7 @@
 package AdministrationClient;
 
-import AdministrationServer.AvgStatsResponse;
-import SETA.TaxiData;
+import AdministrationServer.StatisticsService.AvgStatsResponse;
+import SETA.Taxi.TaxiData;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.sun.jersey.api.client.Client;

@@ -1,13 +1,12 @@
-package SETA;
+package SETA.Taxi;
 
+import SETA.Taxi.TaxiData;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import project.taxi.grpc.TaxiGrpc;
 import project.taxi.grpc.TaxiGrpc.*;
 import project.taxi.grpc.TaxiOuterClass;
-
-import java.util.concurrent.TimeUnit;
 
 // Thread to invoke an RPC on all the taxis on the network at the time of my entry
 public class TaxiRpcNewJoinThread extends Thread
