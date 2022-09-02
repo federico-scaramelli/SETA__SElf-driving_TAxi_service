@@ -71,7 +71,7 @@ public class TaxiMqttThread extends Thread
     {
         System.out.println("\nReceived from MQTT broker: " + rideRequest);
         // Ignore the ride request if you are not available
-        if (myData.isRiding || myData.getBatteryLevel() <= 30)
+        if (myData.isRiding || myData.getBatteryLevel() <= 30 || TaxiProcess.completedRides.contains(rideRequest.ID))
         {
             System.out.println("Request " + rideRequest + " ignored.");
         } else {
@@ -79,11 +79,13 @@ public class TaxiMqttThread extends Thread
         }
     }
 
-    public void notifySetaRequestTaken(int rideId) throws MqttException {
-        MqttMessage message = new MqttMessage(Integer.toString(rideId).getBytes());
+    public void notifySetaRequestTaken(RideRequest request) throws MqttException
+    {
+        String requestJson = serializer.toJson(request);
+        MqttMessage message = new MqttMessage(requestJson.getBytes());
         message.setQos(qos);
-        System.out.println("\nNotifying SETA about ride request " + rideId + " taken in charge.");
-        mqttClient.publish(topic, message);
+        System.out.println("\nNotifying SETA about ride request " + request.ID + " taken in charge.");
+        mqttClient.publish(topic + "/confirmations", message);
     }
 
     public static void changeTopic(int district) throws MqttException {

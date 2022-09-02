@@ -38,6 +38,11 @@ message RideRequest
     Position startingPos    = 2;
 }
 
+message RideId
+{
+    int32 rideId        = 1;
+}
+
 // Works as an ACK for the competition request communicating in the meanwhile the interest about the ride
 message InterestedToCompetition
 {
@@ -48,5 +53,5 @@ service Taxi
 {
     rpc notifyJoin (StartingTaxiInfo) returns (Ack);
     rpc competeForRide (CompeteRequestData) returns (InterestedToCompetition);
-    rpc okTakeRide(Null) returns (Ack);
+    rpc confirmRideTaken(RideId) returns (Ack);
 }

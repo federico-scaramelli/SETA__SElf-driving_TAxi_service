@@ -15,8 +15,9 @@ public class Seta
     static final int qos = 2;
     static final Gson serializer = new Gson();
 
-    static long timeout = 10000;
-    static ArrayList<LinkedList<RideRequest>> rideQueues =  new ArrayList<LinkedList<RideRequest>>();
+    static long timeout = 500000;
+    static ArrayList<LinkedList<RideRequest>> rideQueues = new ArrayList<LinkedList<RideRequest>>();
+    static final ArrayList<Integer> completedRides = new ArrayList<>();
 
     public static void main(String[] argv) throws IOException, MqttException
     {

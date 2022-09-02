@@ -16,7 +16,7 @@ public class TaxiData
     // === Working data ===
     public double batteryLevel = 100;
     public GridCell currentPosition;
-    public boolean isRiding = false;
+    public Boolean isRiding = false;
 
     // === Constructors === //
     // Custom ID and port constructor

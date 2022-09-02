@@ -11,6 +11,7 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import org.eclipse.paho.client.mqttv3.MqttException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,6 +30,9 @@ public class TaxiProcess
     public final static ArrayList<TaxiData> currentCompetitors = new ArrayList<>();
     private static TaxiRideThread taxiRideThread = null;
     public static RideRequest currentRideRequest = null;
+    static final ArrayList<Integer> completedRides = new ArrayList<>();
+
+    static TaxiMqttThread mqttThread;
 
     public static void main(String[] argv) throws IOException
     {
@@ -103,25 +107,26 @@ public class TaxiProcess
 
 
         //======= MQTT BROKER CONNECTION =======
-        TaxiMqttThread mqttThread = new TaxiMqttThread(myData, localStatistics);
+        mqttThread = new TaxiMqttThread(myData, localStatistics);
         mqttThread.start();
-
 
 
 
         // === Input thread ===
 
-        // === RPC thread ===
 
         System.in.read();
     }
 
-    public static void joinCompetition(RideRequest request)
+    public synchronized static void joinCompetition(RideRequest request)
     {
         currentRideRequest = request;
 
-        currentCompetitors.clear();
-        currentCompetitors.addAll(taxiList);
+        synchronized (currentCompetitors) {
+            currentCompetitors.clear();
+            currentCompetitors.addAll(taxiList);
+        }
+
         for (TaxiData t : taxiList)
         {
             TaxiRpcCompetitionThread competitionThread = new TaxiRpcCompetitionThread(myData, t, request);
@@ -129,10 +134,23 @@ public class TaxiProcess
         }
     }
 
+    public static void takeRide(RideRequest request) throws MqttException
+    {
+        mqttThread.notifySetaRequestTaken(request);
+
+        completedRides.add(request.ID);
+        for (TaxiData t : taxiList)
+        {
+            if (t == myData) continue;
+            TaxiRpcConfirmRideThread confirmationThread = new TaxiRpcConfirmRideThread(t, request);
+            confirmationThread.start();
+        }
+
+        startRide(request);
+    }
+
     public static void startRide(RideRequest request)
     {
-        myData.setRidingState(true);
-
         // === Rides thread ===
         taxiRideThread = new TaxiRideThread(myData, localStatistics, request);
         taxiRideThread.start();

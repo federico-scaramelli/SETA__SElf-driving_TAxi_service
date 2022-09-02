@@ -51,6 +51,14 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         System.out.println("\nRPC Server: Received a request from " + requestData.getTaxiId()
                                         + " to compete for ride " + requestData.getRideId());
 
+        // If the ride is already been taken, answer true (block ride taking)
+        if (TaxiProcess.completedRides.contains(requestData.getRideId()))
+        {
+            System.out.println("Ride " + requestData.getRideId() + " already taken.");
+            sendInterest(true, ackStreamObserver);
+            return;
+        }
+
         // If it's a request from myself, answer false
         if (requestData.getTaxiId() == myData.getID())
         {
@@ -93,7 +101,10 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         if (GridHelper.getDistance(myData.getPosition(),
                 TaxiProcess.currentRideRequest.startingPos) > requestData.getDistance())
         {
-            System.out.println("I lost the competition for the ride " + requestData.getRideId());
+            System.out.println("I lost the competition for the ride " + requestData.getRideId() +
+                    "\nMy distance is " + GridHelper.getDistance(myData.getPosition(),
+                    TaxiProcess.currentRideRequest.startingPos) + " while the distance of competitor is "
+                    + requestData.getDistance());
             sendInterest(false, ackStreamObserver);
             return;
         }
@@ -117,6 +128,18 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         InterestedToCompetition ack = InterestedToCompetition.newBuilder()
                 .setInterested(interest)
                 .build();
+        ackStreamObserver.onNext(ack);
+        ackStreamObserver.onCompleted();
+    }
+
+    @Override
+    public void confirmRideTaken(RideId rideId, StreamObserver<Ack> ackStreamObserver)
+    {
+        synchronized (TaxiProcess.completedRides) {
+            TaxiProcess.completedRides.add(rideId.getRideId());
+        }
+
+        Ack ack = Ack.newBuilder().setAck(true).build();
         ackStreamObserver.onNext(ack);
         ackStreamObserver.onCompleted();
     }

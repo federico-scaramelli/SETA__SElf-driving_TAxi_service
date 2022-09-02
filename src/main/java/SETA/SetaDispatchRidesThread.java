@@ -32,7 +32,8 @@ public class SetaDispatchRidesThread extends Thread {
     final int qos = 2;
     final Gson serializer = new Gson();
     final MqttClient mqttClient;
-    Timer timerDistrict = new Timer();
+    Timer timerRepeatRequestDispatch = new Timer();
+    TimerTask timerTask;
     final LinkedList<RideRequest> rideQueue;
     RideRequest dispatchedRide = null;
 
@@ -46,11 +47,11 @@ public class SetaDispatchRidesThread extends Thread {
         {
             synchronized (rideQueue)
             {
-                // If I already have dispatched a ride or I don't have any ride to dispatch
+                // If I already have dispatched a ride, or I don't have any ride to dispatch
                 while (dispatchedRide != null || rideQueue.size() == 0)
                 {
                     try {
-                        System.out.println("--> Waiting for a ride in the queue...");
+                        //System.out.println("--> Waiting for a ride in the queue...");
                         rideQueue.wait();
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -60,7 +61,7 @@ public class SetaDispatchRidesThread extends Thread {
                 System.out.println("--> Ride poll!");
                 dispatchedRide = rideQueue.poll();
 
-                timerDistrict.schedule(new TimerTask() {
+                timerTask = new TimerTask() {
                     @Override
                     public void run() {
                         try {
@@ -69,9 +70,10 @@ public class SetaDispatchRidesThread extends Thread {
                             throw new RuntimeException(e);
                         }
                     }
-                }, 0, Seta.timeout);
+                };
+                timerRepeatRequestDispatch.schedule(timerTask, 0, Seta.timeout);
 
-                System.out.println("--> Notify!");
+                //System.out.println("--> Notify!");
                 rideQueue.notify();
             }
         }
@@ -93,10 +95,10 @@ public class SetaDispatchRidesThread extends Thread {
     {
         try {
             // Subscribe to all the district topics to receive messages from taxis
-            mqttClient.subscribe(topicBasePath + 1);
-            mqttClient.subscribe(topicBasePath + 2);
-            mqttClient.subscribe(topicBasePath + 3);
-            mqttClient.subscribe(topicBasePath + 4);
+            mqttClient.subscribe(topicBasePath + 1 + "/confirmations");
+            mqttClient.subscribe(topicBasePath + 2 + "/confirmations");
+            mqttClient.subscribe(topicBasePath + 3 + "/confirmations");
+            mqttClient.subscribe(topicBasePath + 4 + "/confirmations");
 
             // Set callback for receiving messages
             mqttClient.setCallback(new MqttCallback() {
@@ -108,18 +110,30 @@ public class SetaDispatchRidesThread extends Thread {
                 }
 
                 @Override
-                public void messageArrived(String topic, MqttMessage message) throws Exception {
+                public void messageArrived(String topic, MqttMessage message)
+                {
                     String msg = new String(message.getPayload());
-                    int rideId;
-                    try
-                    {
-                        rideId = Integer.parseInt(msg);
-                    } catch (Exception e) { return; }
-                    int district = Integer.parseInt(topic.substring(topic.length() - 1));
+                    RideRequest request = serializer.fromJson(msg, RideRequest.class);
+
+                    if (dispatchedRide == null || request.ID != dispatchedRide.ID) return;
+
+                    int district = Integer.parseInt(topic.substring(
+                                                    topic.lastIndexOf('/') - 1,
+                                                    topic.lastIndexOf('/')));
+
                     dispatchedRide = null;
-                    timerDistrict.cancel();
-                    timerDistrict = new Timer();
-                    System.out.println("Ride " + rideId + " confirmed from district " + district);
+                    timerTask.cancel();
+                    timerTask = null;
+                    timerRepeatRequestDispatch.cancel();
+                    timerRepeatRequestDispatch = new Timer();
+
+                    System.out.println("Ride " + request.ID + " confirmed from district " + district);
+                    synchronized (rideQueue) {
+                        rideQueue.notify();
+                    }
+                    synchronized (Seta.completedRides) {
+                        Seta.completedRides.add(request.ID);
+                    }
                 }
 
                 @Override
@@ -136,7 +150,7 @@ public class SetaDispatchRidesThread extends Thread {
             System.out.println("-> Msg: " + me.getMessage());
             System.out.println("-> Loc: " + me.getLocalizedMessage());
             System.out.println("-> Cause: " + me.getCause());
-            System.out.println("-> Excep: " + me);
+            System.out.println("-> Exception: " + me);
             me.printStackTrace();
             System.exit(0);
         }

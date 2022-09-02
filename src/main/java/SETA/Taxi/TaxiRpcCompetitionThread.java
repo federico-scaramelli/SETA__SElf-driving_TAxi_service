@@ -5,6 +5,7 @@ import SETA.RideRequest;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import project.taxi.grpc.TaxiGrpc;
 import project.taxi.grpc.TaxiOuterClass.*;
 import java.util.concurrent.TimeUnit;
@@ -23,7 +24,8 @@ public class TaxiRpcCompetitionThread extends Thread
         this.myData = myData;
         this.otherTaxiServer = otherTaxiServer;
         this.request = request;
-        channel = ManagedChannelBuilder.forTarget("localhost:" + otherTaxiServer.getPort()).usePlaintext().build();}
+        channel = ManagedChannelBuilder.forTarget("localhost:" + otherTaxiServer.getPort()).usePlaintext().build();
+    }
 
     @Override
     public void run()
@@ -76,23 +78,29 @@ public class TaxiRpcCompetitionThread extends Thread
 
             @Override
             public void onCompleted() {
-                //System.out.println("Completed RPC client [Ride " + request.ID + " competition]");
-                channel.shutdown();
+                System.out.println("Completed RPC client [Ride " + request.ID + " competition with "
+                                                                     + otherTaxiServer.getID() + "]");
+                channel.shutdownNow();
 
                 // Ride already taken
-                if (myData.isRiding)
-                    return;
+                synchronized (myData.isRiding) {
+                    if (myData.isRiding)
+                        return;
 
-                // If my taxi is the only competitor remained, take the ride
-                // System.out.println("COMPETITORS REMAINED: " + TaxiProcess.currentCompetitors);
-                /*if (TaxiProcess.currentCompetitors.size() == 1
-                    && TaxiProcess.currentCompetitors.get(0).getID() == myData.getID())*/
-                if (TaxiProcess.currentCompetitors.isEmpty())
-                {
-                    TaxiProcess.startRide(request);
+                    // If I win, take the ride
+                    if (TaxiProcess.currentCompetitors.isEmpty()) {
+                        myData.setRidingState(true);
+
+                        try {
+                            TaxiProcess.takeRide(request);
+                        } catch (MqttException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
                 }
             }
         });
+
         requestCount++;
     }
 }
