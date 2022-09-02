@@ -45,7 +45,7 @@ public class TaxiRpcCompetitionThread extends Thread
             try { Thread.sleep(5000); } catch (Exception e) {}*/
 
         // Call the competeForRide method on the server of another taxi
-        stub.withDeadlineAfter(5, TimeUnit.SECONDS)
+        stub//.withDeadlineAfter(5, TimeUnit.SECONDS)
             .competeForRide(requestData, new StreamObserver<InterestedToCompetition>()
         {
             @Override
@@ -65,7 +65,7 @@ public class TaxiRpcCompetitionThread extends Thread
 
             @Override
             public void onError(Throwable t) {
-                System.out.println("\nTIMEOUT! No ACK received from " + otherTaxiServer.getID() +
+                /*System.out.println("\nTIMEOUT! No ACK received from " + otherTaxiServer.getID() +
                         "\nThis was the request " + requestCount + "...");
                 if (requestCount < requestTryingLimit) {
                     System.out.println("Sending a new request to compete...");
@@ -73,7 +73,7 @@ public class TaxiRpcCompetitionThread extends Thread
                     run();
                 } else {
                     System.out.println("Taxi " + otherTaxiServer.getID() + " excluded from the competition.");
-                }
+                }*/
             }
 
             @Override

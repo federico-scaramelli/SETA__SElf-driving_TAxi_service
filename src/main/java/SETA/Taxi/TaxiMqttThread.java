@@ -71,11 +71,14 @@ public class TaxiMqttThread extends Thread
     {
         System.out.println("\nReceived from MQTT broker: " + rideRequest);
         // Ignore the ride request if you are not available
-        if (myData.isRiding || myData.getBatteryLevel() <= 30 || TaxiProcess.completedRides.contains(rideRequest.ID))
-        {
-            System.out.println("Request " + rideRequest + " ignored.");
-        } else {
-            TaxiProcess.joinCompetition(rideRequest);
+        synchronized (myData.isRiding) {
+            synchronized (TaxiProcess.completedRides) {
+                if (myData.isRiding || myData.getBatteryLevel() <= 30 || TaxiProcess.completedRides.contains(rideRequest.ID)) {
+                    System.out.println("Request " + rideRequest + " ignored.");
+                } else {
+                    TaxiProcess.joinCompetition(rideRequest);
+                }
+            }
         }
     }
 

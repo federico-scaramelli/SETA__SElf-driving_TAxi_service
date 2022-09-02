@@ -10,7 +10,7 @@ public class SetaGenerateRidesThread extends Thread
     public void run()
     {
         while (true) {
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < 4; i++) {
                 RideRequest request = new RideRequest();
                 // Avoid conflicts
                 synchronized (Seta.completedRides) {
@@ -38,7 +38,7 @@ public class SetaGenerateRidesThread extends Thread
             }
 
             try {
-                Thread.sleep(30000);
+                Thread.sleep(25000);
             } catch (Exception e) {
             }
         }

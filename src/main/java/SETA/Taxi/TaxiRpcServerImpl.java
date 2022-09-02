@@ -70,13 +70,16 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         // If you are from another district, or you are not available, send negative interest ack
         if (GridHelper.getDistrict(myData.getPosition()) != requestData.getRideDistrict()
             || myData.getBatteryLevel() <= 30
-            || (myData.isRiding && TaxiProcess.currentRideRequest.ID != requestData.getRideId()))
+            || (myData.isRiding && TaxiProcess.currentRideRequest != null
+                && TaxiProcess.currentRideRequest.ID != requestData.getRideId()))
         {
             System.out.println("I'm not available for the request " + requestData.getRideId());
             sendInterest(false, ackStreamObserver);
             return;
         }
 
+
+        // NOTE: produce errors because it's possible to enter into the if block even if the request has been ignored
         // If you are in the same district, but you have not received the request from mqtt
         if (TaxiProcess.currentRideRequest == null)
         {
@@ -87,6 +90,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
                 try { Thread.sleep(100); } catch (Exception e) {}
             }
         }
+
         // If there is a difference between last received ride request from mqtt and the one received from RPC
         if (TaxiProcess.currentRideRequest.ID != requestData.getRideId())
         {
