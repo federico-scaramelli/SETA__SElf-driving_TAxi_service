@@ -20,7 +20,10 @@ public class TaxiProcess
 {
     public static final String adminServerAddress = "http://localhost:9797/";
     private static final String addTaxiPath = "taxi/add";
+    private static final String removeTaxiPath = "taxi/remove";
     private static final Gson serializer = new Gson();
+
+    private static Client client = null;
 
     // Components
     private static ArrayList<TaxiData> taxiList = null;
@@ -39,7 +42,7 @@ public class TaxiProcess
         //region ======= REST CONNECTION AND ADDING REQUEST TO THE SERVER =======
 
         // REST Client to communicate with the administration server
-        Client client = Client.create();
+        client = Client.create();
 
         // === Connect to the network adding the taxi to the Smart City ===
         try {
@@ -75,6 +78,7 @@ public class TaxiProcess
         }
         //endregion
 
+
         //region ======= Statistics Threads =======
         localStatistics = new Statistics(myData);
         PM10Buffer pm10BufferThread = new PM10Buffer();
@@ -105,17 +109,39 @@ public class TaxiProcess
         }
         //endregion
 
+        // === Input thread ===
+        TaxiInputThread inputThread = new TaxiInputThread(myData);
+        inputThread.start();
+        System.out.println("\nInsert 'quit' to quit the Smart City.");
 
         //======= MQTT BROKER CONNECTION =======
         mqttThread = new TaxiMqttThread(myData, localStatistics);
         mqttThread.start();
 
+        while (!myData.exited) {}
 
+        // === Request to remove the taxi to the Smart City ===
+        try {
+            String serializedTaxiData = serializer.toJson(myData.getID());
+            WebResource webResource = client.resource(adminServerAddress + removeTaxiPath);
+            ClientResponse clientResponse = webResource
+                    .accept("application/json")
+                    .type("application/json")
+                    .post(ClientResponse.class, serializedTaxiData);
 
-        // === Input thread ===
+            if (clientResponse.getStatus() != 200)
+            {
+                throw new RuntimeException("Failed to remove the taxi to the network.\n" +
+                        "HTTP Server response:\n" +
+                        "--> Error code: " + clientResponse.getStatus() + "\n" +
+                        "--> Info: " + clientResponse.getStatusInfo());
+            }
 
-
-        System.in.read();
+            System.out.println("Successfully remove from the Smart City.\n");
+        } catch (Exception e) {
+            System.out.println(e.toString());
+            System.exit(0);
+        }
     }
 
     public synchronized static void joinCompetition(RideRequest request)
@@ -156,5 +182,14 @@ public class TaxiProcess
         taxiRideThread.start();
 
         currentRideRequest = null;
+    }
+
+    public static void notifyQuit()
+    {
+        for (TaxiData t : taxiList)
+        {
+            TaxiRpcNotifyQuit notifyQuitThread = new TaxiRpcNotifyQuit(myData, t);
+            notifyQuitThread.start();
+        }
     }
 }

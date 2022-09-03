@@ -15,13 +15,13 @@ public class Seta
     static final int qos = 2;
     static final Gson serializer = new Gson();
 
-    static long timeout = 5000;
+    static long timeout = 500;
     static ArrayList<LinkedList<RideRequest>> rideQueues = new ArrayList<LinkedList<RideRequest>>();
     static final ArrayList<Integer> completedRides = new ArrayList<>();
 
     public static void main(String[] argv) throws IOException, MqttException
     {
-        for (int i = 0; i < 1; i++)
+        for (int i = 0; i < 4; i++)
         {
             rideQueues.add(new LinkedList<RideRequest>());
             // Dispatch rides and receive confirmations

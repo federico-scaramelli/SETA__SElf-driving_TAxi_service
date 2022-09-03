@@ -5,8 +5,11 @@ import com.google.gson.Gson;
 import org.eclipse.paho.client.mqttv3.*;
 
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static SETA.Seta.*;
 
@@ -85,7 +88,8 @@ public class SetaDispatchRidesThread extends Thread {
         MqttMessage message = new MqttMessage(requestJson.getBytes());
         message.setQos(qos);
         System.out.println("Publishing request to the broker:\n" +
-                "--> " + dispatchedRide);
+                "--> " + dispatchedRide +
+                "\nRemains " + completedRides.size());
         int district = GridHelper.getDistrict(dispatchedRide.startingPos);
         mqttClient.publish(topicBasePath + district, message);
         System.out.println("Message published.");
@@ -132,7 +136,34 @@ public class SetaDispatchRidesThread extends Thread {
                         rideQueue.notify();
                     }
                     synchronized (Seta.completedRides) {
+                        if (completedRides.contains(request.ID))
+                        {
+                            System.out.println("!!!!!!!!!ERROR!!!!!!!!!! Received a doubled confirmation!");
+                            return;
+                        }
                         Seta.completedRides.add(request.ID);
+
+                        //=================debug
+                        if (completedRides.size() >= 20){
+                            System.out.println("=================LISTS===============================================");
+                            System.out.println("DISTRICT 1: " + rideQueues.get(0));
+                            System.out.println("DISTRICT 2: " + rideQueues.get(1));
+                            System.out.println("DISTRICT 3: " + rideQueues.get(2));
+                            System.out.println("DISTRICT 4: " + rideQueues.get(3));
+                            System.out.println("=================COMPLETED===============================================");
+                            System.out.println(completedRides.size());
+                            System.out.println(completedRides);
+
+                            System.out.println("=========================DUPLICATES======================");
+                            //Get frequencies of each element
+                            Map<Integer, Long> frequencies = completedRides.stream()
+                                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+                            //then filter only the inputs which have frequency greater than 1
+                            frequencies.entrySet().stream()
+                                    .filter(entry -> entry.getValue() > 1)
+                                    .forEach(entry -> System.out.println(entry.getKey()));
+                        }
                     }
                 }
 

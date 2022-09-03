@@ -1,5 +1,11 @@
 package SETA;
 import Utils.GridHelper;
+
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static SETA.Seta.completedRides;
 import static SETA.Seta.rideQueues;
 
 public class SetaGenerateRidesThread extends Thread
@@ -9,8 +15,9 @@ public class SetaGenerateRidesThread extends Thread
     @Override
     public void run()
     {
-        while (true) {
-            for (int i = 0; i < 4; i++) {
+        int count = 10;
+        while (count > 0) {
+            for (int i = 0; i < 2; i++) {
                 RideRequest request = new RideRequest();
                 // Avoid conflicts
                 synchronized (Seta.completedRides) {
@@ -22,10 +29,10 @@ public class SetaGenerateRidesThread extends Thread
                 int district = GridHelper.getDistrict(request.startingPos);
 
                 // ====================================================================== debug
-                while (district != 1) {
+                /*while (district != 1) {
                     request = new RideRequest();
                     district = GridHelper.getDistrict(request.startingPos);
-                }
+                }*/
                 // ====================================================================== debug
 
                 synchronized (rideQueues.get(district - 1)) {
@@ -38,9 +45,11 @@ public class SetaGenerateRidesThread extends Thread
             }
 
             try {
-                Thread.sleep(25000);
+                Thread.sleep(5000);
             } catch (Exception e) {
             }
+
+            count--;
         }
     }
 }

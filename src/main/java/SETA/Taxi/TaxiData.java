@@ -17,6 +17,8 @@ public class TaxiData
     public double batteryLevel = 100;
     public GridCell currentPosition;
     public Boolean isRiding = false;
+    public Boolean isExiting = false;
+    public Boolean exited = false;
 
     // === Constructors === //
     // Custom ID and port constructor
@@ -33,7 +35,7 @@ public class TaxiData
     public TaxiData()
     {
         this (new Random().nextInt(1000) + 1,
-                new Random().nextInt(65536 - 9797) + 9797);
+            new Random().nextInt(65536 - 9796) + 9797);
     }
 
     // === Getters ===

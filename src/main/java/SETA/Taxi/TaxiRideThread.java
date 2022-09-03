@@ -12,6 +12,8 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 public class TaxiRideThread extends Thread
 {
     public static final String updateTaxiDataPath = "taxi/update";
+    public static final String sendLocalStatsPath = "statistics/add";
+
     private final Gson serializer = new Gson();
     Client client = Client.create();
 
@@ -27,42 +29,44 @@ public class TaxiRideThread extends Thread
     }
 
     @Override
-    public void run() {
-        //while(true)
-        {
-            //if (myRide == null) continue;
+    public void run()
+    {
+        System.out.println("\nDriving thread started. Executing ride...");
+        myData.setRidingState(true);
+        try {
+            Thread.sleep(5000);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-            System.out.println("\nDriving thread started. Executing ride...");
-            myData.setRidingState(true);
+        int myDistrict = GridHelper.getDistrict(myData.getPosition());
+        System.out.println("Arrived at destination " + myRide.destinationPos);
+        myData.setPosition(myRide.destinationPos);
+
+        if (GridHelper.getDistrict(myRide.destinationPos) != myDistrict) {
+            // Change topic
             try {
-                Thread.sleep(5000);
-            } catch (Exception e) {
+                myDistrict = GridHelper.getDistrict(myRide.destinationPos);
+                TaxiMqttThread.changeTopic(myDistrict);
+            } catch (MqttException e) {
                 e.printStackTrace();
             }
-
-            int myDistrict = GridHelper.getDistrict(myData.getPosition());
-            System.out.println("Arrived at destination " + myRide.destinationPos);
-            myData.setPosition(myRide.destinationPos);
-
-            if (GridHelper.getDistrict(myRide.destinationPos) != myDistrict) {
-                // Change topic
-                try {
-                    myDistrict = GridHelper.getDistrict(myRide.destinationPos);
-                    TaxiMqttThread.changeTopic(myDistrict);
-                } catch (MqttException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            UpdateData();
-            SendUpdateToRestServer();
-
-            //myRide = null;
-            System.out.println(myData);
         }
+
+        updateData();
+        sendUpdateToRestServer();
+
+        synchronized (myData.isExiting) {
+            if (myData.isExiting) {
+                // Send statistics to REST server
+                sendLocalStatsToRestServer();
+            }
+        }
+
+        System.out.println(myData);
     }
 
-    private void UpdateData()
+    private void updateData()
     {
         double totalTraveledKm = myRide.getKm() + GridHelper.getDistance(myData.getPosition(), myRide.startingPos);
 
@@ -74,7 +78,7 @@ public class TaxiRideThread extends Thread
         myLocalStats.addRideToStat(totalTraveledKm, myData.getBatteryLevel());
     }
 
-    private void SendUpdateToRestServer()
+    private void sendUpdateToRestServer()
     {
         String serializedStats = serializer.toJson(myData);
         WebResource webResource = client.resource(TaxiProcess.adminServerAddress + updateTaxiDataPath);
@@ -86,6 +90,38 @@ public class TaxiRideThread extends Thread
         if (clientResponse.getStatus() != 200)
         {
             throw new RuntimeException("Failed to update the taxi data on the server.\n" +
+                    "HTTP Server response:\n" +
+                    "--> Error code: " + clientResponse.getStatus() + "\n" +
+                    "--> Info: " + clientResponse.getStatusInfo());
+        }
+    }
+
+    private void sendLocalStatsToRestServer()
+    {
+        Statistics statsCopy;
+        synchronized (myLocalStats)
+        {
+            statsCopy = new Statistics(myLocalStats);
+            /*try{
+                System.out.println("5 sec di attesa mentre mi copio le stats");
+                Thread.sleep(5000);
+            }catch(Exception e){
+                e.printStackTrace();
+            }*/
+        }
+
+        statsCopy.setTimestamp();
+
+        String serializedStats = serializer.toJson(statsCopy);
+        WebResource webResource = client.resource(TaxiProcess.adminServerAddress + sendLocalStatsPath);
+        ClientResponse clientResponse = webResource
+                .accept("application/json")
+                .type("application/json")
+                .post(ClientResponse.class, serializedStats);
+
+        if (clientResponse.getStatus() != 200)
+        {
+            throw new RuntimeException("Failed to add the local stats to the network.\n" +
                     "HTTP Server response:\n" +
                     "--> Error code: " + clientResponse.getStatus() + "\n" +
                     "--> Info: " + clientResponse.getStatusInfo());

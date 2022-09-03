@@ -22,7 +22,6 @@ public class AdministrationClient
     public static final String queryStatisticsPath = "statistics/get/avg";
 
     private static final Gson serializer = new Gson();
-    private static final Locale defaultFormattingLocale = Locale.ITALY;
     private static final DateTimeFormatter timeFormatter
                         = DateTimeFormatter.ISO_LOCAL_TIME;
 

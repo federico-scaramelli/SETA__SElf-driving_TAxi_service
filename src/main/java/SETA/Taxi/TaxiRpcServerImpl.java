@@ -6,6 +6,7 @@ import project.taxi.grpc.TaxiGrpc;
 import project.taxi.grpc.TaxiOuterClass.*;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 // SERVER SIDE
 public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
@@ -68,9 +69,10 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         }
 
         // If you are from another district, or you are not available, send negative interest ack
-        if (GridHelper.getDistrict(myData.getPosition()) != requestData.getRideDistrict()
-            || myData.getBatteryLevel() <= 30
-            || (myData.isRiding && TaxiProcess.currentRideRequest != null
+        if (GridHelper.getDistrict(myData.getPosition()) != requestData.getRideDistrict()   // Different district
+            || myData.getBatteryLevel() <= 30                                               // Charging
+            || myData.isExiting                                                             // Exiting
+            || (myData.isRiding && TaxiProcess.currentRideRequest != null                   // Riding
                 && TaxiProcess.currentRideRequest.ID != requestData.getRideId()))
         {
             System.out.println("I'm not available for the request " + requestData.getRideId());
@@ -78,17 +80,14 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
             return;
         }
 
-
-        // NOTE: produce errors because it's possible to enter into the if block even if the request has been ignored
         // If you are in the same district, but you have not received the request from mqtt
         if (TaxiProcess.currentRideRequest == null)
         {
             System.out.println("RPC Server: Ride request " + requestData.getRideId() + " not-received from MQTT.\n" +
                     "Waiting for it from MQTT.");
-            // QoS is 2, so I'll receive the request. Wait for it!
-            while (TaxiProcess.currentRideRequest == null) {
-                try { Thread.sleep(100); } catch (Exception e) {}
-            }
+
+            // Don't send any ACK. Other taxi will send again the request to compete!
+            return;
         }
 
         // If there is a difference between last received ride request from mqtt and the one received from RPC
@@ -146,5 +145,33 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         Ack ack = Ack.newBuilder().setAck(true).build();
         ackStreamObserver.onNext(ack);
         ackStreamObserver.onCompleted();
+    }
+
+    @Override
+    public void notifyQuit(QuitNotification quitNotification, StreamObserver<Null> nullStreamObserver)
+    {
+        System.out.println("NOTIFICATION! Taxi " + quitNotification.getTaxiId() + " is quitting the city.");
+
+        synchronized (TaxiProcess.currentCompetitors)
+        {
+            Optional<TaxiData> result = TaxiProcess.currentCompetitors.stream().parallel()
+                    .filter(taxi -> taxi.getID() == quitNotification.getTaxiId()).findAny();
+            if (result.isPresent()) {
+                TaxiProcess.currentCompetitors.remove(result.get());
+                System.out.println("Taxi " + quitNotification.getTaxiId() + " removed from competitors list.");
+            }
+        }
+
+        synchronized (myList)
+        {
+            Optional<TaxiData> result = myList.stream().parallel()
+                    .filter(taxi -> taxi.getID() == quitNotification.getTaxiId()).findAny();
+            if (result.isPresent())
+                myList.remove(result.get());
+            else
+                System.out.println("ERROR! Quitting taxi not found on list!");
+        }
+        nullStreamObserver.onNext(Null.newBuilder().build());
+        nullStreamObserver.onCompleted();
     }
 }

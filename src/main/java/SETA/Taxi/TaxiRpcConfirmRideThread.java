@@ -8,6 +8,8 @@ import io.grpc.stub.StreamObserver;
 import project.taxi.grpc.TaxiGrpc;
 import project.taxi.grpc.TaxiOuterClass;
 
+import java.util.concurrent.TimeUnit;
+
 public class TaxiRpcConfirmRideThread extends Thread
 {
     TaxiData otherTaxiServer;
@@ -48,8 +50,15 @@ public class TaxiRpcConfirmRideThread extends Thread
             @Override
             public void onCompleted() {
                 System.out.println("Completed RPC client [Ride confirmation " + request.ID + "]");
+                channel.shutdownNow();
             }
         });
+
+        try {
+            channel.awaitTermination(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

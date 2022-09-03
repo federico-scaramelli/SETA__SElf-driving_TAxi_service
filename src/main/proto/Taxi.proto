@@ -23,6 +23,11 @@ message Position
     int32 y         = 2;
 }
 
+message QuitNotification
+{
+    int32 taxiId        = 1;
+}
+
 message CompeteRequestData
 {
     int32 rideId        = 1;
@@ -52,6 +57,7 @@ message InterestedToCompetition
 service Taxi
 {
     rpc notifyJoin (StartingTaxiInfo) returns (Ack);
+    rpc notifyQuit (QuitNotification) returns (Null);
     rpc competeForRide (CompeteRequestData) returns (InterestedToCompetition);
     rpc confirmRideTaken(RideId) returns (Ack);
 }

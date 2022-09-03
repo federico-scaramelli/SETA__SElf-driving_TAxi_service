@@ -16,7 +16,7 @@ public class TaxiRpcCompetitionThread extends Thread
     TaxiData otherTaxiServer;
     SETA.RideRequest request;
     private int requestCount = 0;
-    private int requestTryingLimit = 3;
+    private int requestTryingLimit = 10;
     final ManagedChannel channel;
 
     public TaxiRpcCompetitionThread(TaxiData myData, TaxiData otherTaxiServer, RideRequest request)
@@ -45,7 +45,7 @@ public class TaxiRpcCompetitionThread extends Thread
             try { Thread.sleep(5000); } catch (Exception e) {}*/
 
         // Call the competeForRide method on the server of another taxi
-        stub//.withDeadlineAfter(5, TimeUnit.SECONDS)
+        stub.withDeadlineAfter(5, TimeUnit.SECONDS)
             .competeForRide(requestData, new StreamObserver<InterestedToCompetition>()
         {
             @Override
@@ -65,7 +65,7 @@ public class TaxiRpcCompetitionThread extends Thread
 
             @Override
             public void onError(Throwable t) {
-                /*System.out.println("\nTIMEOUT! No ACK received from " + otherTaxiServer.getID() +
+                System.out.println("\nTIMEOUT! No ACK received from " + otherTaxiServer.getID() +
                         "\nThis was the request " + requestCount + "...");
                 if (requestCount < requestTryingLimit) {
                     System.out.println("Sending a new request to compete...");
@@ -73,7 +73,7 @@ public class TaxiRpcCompetitionThread extends Thread
                     run();
                 } else {
                     System.out.println("Taxi " + otherTaxiServer.getID() + " excluded from the competition.");
-                }*/
+                }
             }
 
             @Override
@@ -81,6 +81,13 @@ public class TaxiRpcCompetitionThread extends Thread
                 System.out.println("Completed RPC client [Ride " + request.ID + " competition with "
                                                                      + otherTaxiServer.getID() + "]");
                 channel.shutdownNow();
+
+                synchronized (myData.isExiting) {
+                    if (myData.isExiting) {
+                        System.out.println("Dropping the competition. I'm quitting.");
+                        return;
+                    }
+                }
 
                 // Ride already taken
                 synchronized (myData.isRiding) {
@@ -92,9 +99,12 @@ public class TaxiRpcCompetitionThread extends Thread
                         myData.setRidingState(true);
 
                         try {
+                            //Thread.sleep(10000);
                             TaxiProcess.takeRide(request);
                         } catch (MqttException e) {
                             throw new RuntimeException(e);
+                        /*} catch (InterruptedException e) {
+                            throw new RuntimeException(e);*/
                         }
                     }
                 }

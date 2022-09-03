@@ -4,6 +4,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 import SETA.Taxi.TaxiData;
 
@@ -41,6 +43,18 @@ public class SmartCityManager
                 System.out.println("ID already present.\n");
                 return false;
             }
+
+            // Filter hash map with port number
+            Optional<Map.Entry<Integer, TaxiData>> matchedEntry =
+                    taxiList.entrySet().stream().
+                            filter(element -> element.getValue().getPort() == taxi.getPort()).findAny();
+            // If another taxi with the same port already exist
+            if (matchedEntry.isPresent())
+            {
+                System.out.println("Port number already used.\n");
+                return false;
+            }
+
             taxiList.put(taxi.getID(), taxi);
         }
         System.out.println("Taxi " + taxi.getID() + " added successfully.");
