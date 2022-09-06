@@ -16,9 +16,10 @@ public class TaxiData
     // === Working data ===
     public double batteryLevel = 100;
     public GridCell currentPosition;
-    public Boolean isRiding = false;
-    public Boolean isExiting = false;
-    public Boolean exited = false;
+    public volatile Boolean isRiding = false;
+    public volatile Boolean isExiting = false;
+    public volatile Boolean queuedForCharging = false;
+    public volatile Boolean isCharging = false;
 
     // === Constructors === //
     // Custom ID and port constructor
@@ -66,6 +67,4 @@ public class TaxiData
         s += " available at http://" + address + ":" + port + "/";
         return s;
     }
-
-
 }

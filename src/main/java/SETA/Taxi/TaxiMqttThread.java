@@ -30,11 +30,9 @@ public class TaxiMqttThread extends Thread
         String mqttClientID = MqttClient.generateClientId();
 
         try {
-            mqttClient = new MqttClient(brokerAddress, mqttClientID);
+            mqttClient = new MqttClient(brokerAddress, mqttClientID, null);
             // Request a persistent session
-            MqttConnectOptions mqttOptions = new MqttConnectOptions();
-            mqttOptions.setCleanSession(true);
-            mqttClient.connect(mqttOptions);
+            mqttClient.connect();
 
             mqttClient.setCallback(new MqttCallback() {
                 @Override
@@ -71,19 +69,15 @@ public class TaxiMqttThread extends Thread
     {
         System.out.println("\nReceived from MQTT broker: " + rideRequest);
         // Ignore the ride request if you are not available
-        synchronized (myData.isRiding) {
-            synchronized (TaxiProcess.completedRides) {
-                synchronized (myData.isRiding) {
-                    if (myData.isRiding                                             // Riding
-                            || myData.isExiting                                         // Exiting
-                            || myData.getBatteryLevel() <= 30                           // Charging
-                            || TaxiProcess.completedRides.contains(rideRequest.ID))     // Already taken
-                    {
-                        System.out.println("Request " + rideRequest + " ignored.");
-                    } else {
-                        TaxiProcess.joinCompetition(rideRequest);
-                    }
-                }
+        synchronized (TaxiProcess.completedRides) {
+            if (myData.isRiding                                                 // Riding
+                    || myData.isExiting                                         // Exiting
+                    || myData.getBatteryLevel() <= 30                           // Charging
+                    || TaxiProcess.completedRides.contains(rideRequest.ID))     // Already taken
+            {
+                System.out.println("Request " + rideRequest + " ignored.");
+            } else {
+                TaxiProcess.joinCompetition(rideRequest);
             }
         }
     }

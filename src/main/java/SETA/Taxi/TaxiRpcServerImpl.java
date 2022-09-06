@@ -52,6 +52,10 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         System.out.println("\nRPC Server: Received a request from " + requestData.getTaxiId()
                                         + " to compete for ride " + requestData.getRideId());
 
+        try {
+            Thread.sleep(0);
+        }catch (Exception e) {}
+
         // If the ride is already been taken, answer true (block ride taking)
         if (TaxiProcess.completedRides.contains(requestData.getRideId()))
         {
@@ -150,8 +154,9 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
     @Override
     public void notifyQuit(QuitNotification quitNotification, StreamObserver<Null> nullStreamObserver)
     {
-        System.out.println("NOTIFICATION! Taxi " + quitNotification.getTaxiId() + " is quitting the city.");
+        System.out.println("\nNOTIFICATION! Taxi " + quitNotification.getTaxiId() + " is quitting the city.");
 
+        // Remove it from competitor list
         synchronized (TaxiProcess.currentCompetitors)
         {
             Optional<TaxiData> result = TaxiProcess.currentCompetitors.stream().parallel()
@@ -162,6 +167,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
             }
         }
 
+        // Remove it from taxi list
         synchronized (myList)
         {
             Optional<TaxiData> result = myList.stream().parallel()
@@ -169,7 +175,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
             if (result.isPresent())
                 myList.remove(result.get());
             else
-                System.out.println("ERROR! Quitting taxi not found on list!");
+                System.out.println("\nERROR! Quitting taxi not found in the taxi list!");
         }
         nullStreamObserver.onNext(Null.newBuilder().build());
         nullStreamObserver.onCompleted();

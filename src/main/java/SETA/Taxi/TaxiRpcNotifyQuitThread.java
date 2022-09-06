@@ -1,6 +1,5 @@
 package SETA.Taxi;
 
-import Utils.GridHelper;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
@@ -8,13 +7,13 @@ import project.taxi.grpc.TaxiGrpc;
 import project.taxi.grpc.TaxiOuterClass;
 
 
-public class TaxiRpcNotifyQuit  extends Thread
+public class TaxiRpcNotifyQuitThread extends Thread
 {
     TaxiData myData;
     TaxiData otherTaxiServer;
     final ManagedChannel channel;
 
-    public TaxiRpcNotifyQuit(TaxiData myData, TaxiData otherTaxiServer)
+    public TaxiRpcNotifyQuitThread(TaxiData myData, TaxiData otherTaxiServer)
     {
         this.myData = myData;
         this.otherTaxiServer = otherTaxiServer;
@@ -42,7 +41,10 @@ public class TaxiRpcNotifyQuit  extends Thread
             }
 
             @Override
-            public void onCompleted() {
+            public void onCompleted()
+            {
+                TaxiQuitThread.taxiToNotify.remove(otherTaxiServer);
+                System.out.println("Received confirmation from " + otherTaxiServer);
                 channel.shutdownNow();
             }
         });

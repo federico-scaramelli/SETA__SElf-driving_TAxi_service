@@ -15,7 +15,7 @@ public class TaxiRpcCompetitionThread extends Thread
     TaxiData myData;
     TaxiData otherTaxiServer;
     SETA.RideRequest request;
-    private int requestCount = 0;
+    private static int requestCount = 0;
     private int requestTryingLimit = 10;
     final ManagedChannel channel;
 
@@ -51,6 +51,11 @@ public class TaxiRpcCompetitionThread extends Thread
             @Override
             public void onNext(InterestedToCompetition interestToComp)
             {
+                /*synchronized (TaxiProcess.currentCompetitors) {
+                    if (!TaxiProcess.currentCompetitors.contains(otherTaxiServer))
+                        TaxiProcess.currentCompetitors.remove(otherTaxiServer);
+                }*/
+
                 boolean interest = interestToComp.getInterested();
                 System.out.println("ACK [" + interest + "]! From " + otherTaxiServer.getID()
                         + " about [Ride " + request.ID + " competition]");
@@ -65,47 +70,50 @@ public class TaxiRpcCompetitionThread extends Thread
 
             @Override
             public void onError(Throwable t) {
-                System.out.println("\nTIMEOUT! No ACK received from " + otherTaxiServer.getID() +
-                        "\nThis was the request " + requestCount + "...");
-                if (requestCount < requestTryingLimit) {
-                    System.out.println("Sending a new request to compete...");
-                    channel.shutdownNow();
-                    run();
+                if (t.getCause() == null) {
+                    System.out.println("\nTIMEOUT! No ACK received from " + otherTaxiServer.getID() +
+                            "\nThis was the request " + requestCount + "...");
+                    if (requestCount < requestTryingLimit) {
+                        System.out.println("Sending a new request to compete...");
+                        channel.shutdownNow();
+                        TaxiRpcCompetitionThread newThread =
+                                new TaxiRpcCompetitionThread(myData, otherTaxiServer, request);
+                        newThread.start();
+                        //run();
+                    } else {
+                        System.out.println("Taxi " + otherTaxiServer.getID() + " excluded from the competition.");
+                    }
                 } else {
-                    System.out.println("Taxi " + otherTaxiServer.getID() + " excluded from the competition.");
+                    System.out.println(t.getCause());
                 }
             }
 
             @Override
             public void onCompleted() {
-                System.out.println("Completed RPC client [Ride " + request.ID + " competition with "
-                                                                     + otherTaxiServer.getID() + "]");
+                /*System.out.println("Completed RPC client [Ride " + request.ID + " competition with "
+                                                                     + otherTaxiServer.getID() + "]");*/
                 channel.shutdownNow();
 
-                synchronized (myData.isExiting) {
-                    if (myData.isExiting) {
-                        System.out.println("Dropping the competition. I'm quitting.");
-                        return;
-                    }
+                if (myData.isExiting) {
+                    System.out.println("Dropping the competition. I'm quitting.");
+                    return;
                 }
 
                 // Ride already taken
-                synchronized (myData.isRiding) {
-                    if (myData.isRiding)
-                        return;
+                if (myData.isRiding)
+                    return;
 
-                    // If I win, take the ride
-                    if (TaxiProcess.currentCompetitors.isEmpty()) {
+                // If I win, take the ride
+                if (TaxiProcess.currentCompetitors.isEmpty())
+                {
+                    try {
+                        Thread.sleep(0);
                         myData.setRidingState(true);
-
-                        try {
-                            //Thread.sleep(10000);
-                            TaxiProcess.takeRide(request);
-                        } catch (MqttException e) {
-                            throw new RuntimeException(e);
-                        /*} catch (InterruptedException e) {
-                            throw new RuntimeException(e);*/
-                        }
+                        TaxiProcess.takeRide(request);
+                    } catch (MqttException e) {
+                        throw new RuntimeException(e);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
                     }
                 }
             }

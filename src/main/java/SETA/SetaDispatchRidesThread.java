@@ -18,15 +18,11 @@ public class SetaDispatchRidesThread extends Thread {
     public SetaDispatchRidesThread(LinkedList<RideRequest> rideQueue) throws MqttException
     {
         String mqttClientID = MqttClient.generateClientId();
-        mqttClient = new MqttClient(brokerAddress, mqttClientID);
-
-        // Request a persistent session
-        MqttConnectOptions mqttOptions = new MqttConnectOptions();
-        mqttOptions.setCleanSession(true);
+        mqttClient = new MqttClient(brokerAddress, mqttClientID, null);
 
         // Connect the client
         System.out.println(mqttClientID + " connecting to broker " + brokerAddress);
-        mqttClient.connect(mqttOptions);
+        mqttClient.connect();
         System.out.println(mqttClientID + " connected.");
 
         this.rideQueue = rideQueue;
@@ -84,6 +80,12 @@ public class SetaDispatchRidesThread extends Thread {
 
     private void publishRideRequest() throws MqttException
     {
+        synchronized (completedRides)
+        {
+            if (completedRides.contains(dispatchedRide))
+                return;
+        }
+
         String requestJson = serializer.toJson(dispatchedRide);
         MqttMessage message = new MqttMessage(requestJson.getBytes());
         message.setQos(qos);
@@ -138,13 +140,13 @@ public class SetaDispatchRidesThread extends Thread {
                     synchronized (Seta.completedRides) {
                         if (completedRides.contains(request.ID))
                         {
-                            System.out.println("!!!!!!!!!ERROR!!!!!!!!!! Received a doubled confirmation!");
+                            System.out.println("!!!!!!!!!ERROR!!!!!!!!!! Received a double confirmation!");
                             return;
                         }
                         Seta.completedRides.add(request.ID);
 
                         //=================debug
-                        if (completedRides.size() >= 20){
+                        if (completedRides.size() >= 8){
                             System.out.println("=================LISTS===============================================");
                             System.out.println("DISTRICT 1: " + rideQueues.get(0));
                             System.out.println("DISTRICT 2: " + rideQueues.get(1));

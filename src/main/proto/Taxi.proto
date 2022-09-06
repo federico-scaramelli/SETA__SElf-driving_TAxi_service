@@ -54,10 +54,18 @@ message InterestedToCompetition
     bool interested = 1;
 }
 
+message ChargingRequest
+{
+    int32 taxiId    = 1;
+    int32 district  = 2;
+    int32 timestamp = 3;
+}
+
 service Taxi
 {
     rpc notifyJoin (StartingTaxiInfo) returns (Ack);
     rpc notifyQuit (QuitNotification) returns (Null);
     rpc competeForRide (CompeteRequestData) returns (InterestedToCompetition);
-    rpc confirmRideTaken(RideId) returns (Ack);
+    rpc confirmRideTaken (RideId) returns (Ack);
+    rpc requestCharging (ChargingRequest) returns (Ack);
 }

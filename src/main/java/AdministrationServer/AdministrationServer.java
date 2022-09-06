@@ -20,7 +20,7 @@ public class AdministrationServer
         httpServer.start();
         System.out.println("Administration server is now running on: " + GetAddress());
 
-        System.out.println("-_-_--> Press any key to stop the server <--_-_-");
+        System.out.println("-----> Press any key to stop the server <-----");
         System.in.read();
         System.out.println("Stopping the server...");
         httpServer.stop(0);

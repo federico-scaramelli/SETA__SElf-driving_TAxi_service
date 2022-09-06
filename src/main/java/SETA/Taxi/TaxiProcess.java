@@ -5,6 +5,7 @@ import SETA.RideRequest;
 import SensorPackage.PM10Buffer;
 import SensorPackage.PM10ReaderThread;
 import SensorPackage.PM10Simulator;
+import Utils.GridHelper;
 import com.google.gson.Gson;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -15,29 +16,40 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.PriorityQueue;
+import java.util.Random;
 
 public class TaxiProcess
 {
+    // Connection
     public static final String adminServerAddress = "http://localhost:9797/";
     private static final String addTaxiPath = "taxi/add";
     private static final String removeTaxiPath = "taxi/remove";
     private static final Gson serializer = new Gson();
-
     private static Client client = null;
+    static TaxiMqttThread mqttThread;
+
+    // Network
+    private static ArrayList<TaxiData> taxiList = null;
 
     // Components
-    private static ArrayList<TaxiData> taxiList = null;
     private static TaxiData myData = new TaxiData();
     private static Statistics localStatistics = null;
 
-    public final static ArrayList<TaxiData> currentCompetitors = new ArrayList<>();
+    // Rides
     private static TaxiRideThread taxiRideThread = null;
     public static RideRequest currentRideRequest = null;
     static final ArrayList<Integer> completedRides = new ArrayList<>();
+    public final static ArrayList<TaxiData> currentCompetitors = new ArrayList<>();
 
-    static TaxiMqttThread mqttThread;
+    // Charging
+    static final Integer logicalClockOffset = new Random().nextInt(100);
+    static Integer logicalClock = 0;
+    public final static ArrayList<TaxiData> chargingRequestReceivers = new ArrayList<>();
+    public final static PriorityQueue<TaxiChargingRequest> chargingQueue = new PriorityQueue<TaxiChargingRequest>();
 
-    public static void main(String[] argv) throws IOException
+
+    public static void main(String[] argv) throws IOException, InterruptedException
     {
         //region ======= REST CONNECTION AND ADDING REQUEST TO THE SERVER =======
 
@@ -71,6 +83,7 @@ public class TaxiProcess
             System.out.println("Successfully connected to the Smart City.\n");
             System.out.println("Response received from the server:\n" + addTaxiResponse.toString());
             System.out.println("\nStarting data:\n" + myData.toString());
+            System.out.println("Logical Clock offset: " + logicalClockOffset);
 
         } catch (Exception e) {
             System.out.println(e.toString());
@@ -110,34 +123,34 @@ public class TaxiProcess
         //endregion
 
         // === Input thread ===
-        TaxiInputThread inputThread = new TaxiInputThread(myData);
-        inputThread.start();
+        TaxiQuitThread quitThread = new TaxiQuitThread(myData, taxiList);
+        quitThread.start();
         System.out.println("\nInsert 'quit' to quit the Smart City.");
 
         //======= MQTT BROKER CONNECTION =======
         mqttThread = new TaxiMqttThread(myData, localStatistics);
         mqttThread.start();
 
-        while (!myData.exited) {}
+        // Wait until the quit thread has done
+        quitThread.join();
+        //while (!myData.exited) {}
 
-        // === Request to remove the taxi to the Smart City ===
+        // === Request to remove the taxi from the Smart City ===
         try {
             String serializedTaxiData = serializer.toJson(myData.getID());
-            WebResource webResource = client.resource(adminServerAddress + removeTaxiPath);
-            ClientResponse clientResponse = webResource
-                    .accept("application/json")
-                    .type("application/json")
-                    .post(ClientResponse.class, serializedTaxiData);
+            WebResource webResource = client.resource(adminServerAddress + removeTaxiPath + "/" + myData.ID);
+            ClientResponse clientResponse = webResource.delete(ClientResponse.class);
 
             if (clientResponse.getStatus() != 200)
             {
-                throw new RuntimeException("Failed to remove the taxi to the network.\n" +
+                throw new RuntimeException("Failed to remove the taxi from the network.\n" +
                         "HTTP Server response:\n" +
                         "--> Error code: " + clientResponse.getStatus() + "\n" +
                         "--> Info: " + clientResponse.getStatusInfo());
             }
 
-            System.out.println("Successfully remove from the Smart City.\n");
+            System.out.println("Successfully removed from the Smart City.\n");
+            System.exit(0);
         } catch (Exception e) {
             System.out.println(e.toString());
             System.exit(0);
@@ -153,7 +166,7 @@ public class TaxiProcess
             currentCompetitors.addAll(taxiList);
         }
 
-        for (TaxiData t : taxiList)
+        for (TaxiData t : currentCompetitors)
         {
             TaxiRpcCompetitionThread competitionThread = new TaxiRpcCompetitionThread(myData, t, request);
             competitionThread.start();
@@ -184,12 +197,32 @@ public class TaxiProcess
         currentRideRequest = null;
     }
 
-    public static void notifyQuit()
+    public static void startChargingProcess()
     {
-        for (TaxiData t : taxiList)
+        myData.queuedForCharging = true;
+        System.out.println("\nRecharging process started...");
+
+        // Go to the charging station
+        GridCell stationCell = GridHelper.getRechargeStation(myData.getPosition());
+        double distance = GridHelper.getDistance(myData.getPosition(), stationCell);
+        myData.setPosition(stationCell);
+        myData.reduceBattery(distance);
+        System.out.println("\nArrived at recharge station.");
+
+        // Update logical clock
+        logicalClock += logicalClockOffset;
+        System.out.println("\nLogical clock value: " + logicalClock);
+
+        // Broadcast request
+        synchronized (chargingRequestReceivers) {
+            chargingRequestReceivers.clear();
+            chargingRequestReceivers.addAll(taxiList);
+        }
+
+        for (TaxiData t : chargingRequestReceivers)
         {
-            TaxiRpcNotifyQuit notifyQuitThread = new TaxiRpcNotifyQuit(myData, t);
-            notifyQuitThread.start();
+            TaxiRpcRequestChargingThread chargingThread = new TaxiRpcRequestChargingThread(myData, t);
+            chargingThread.start();
         }
     }
 }

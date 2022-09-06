@@ -32,9 +32,8 @@ public class TaxiRideThread extends Thread
     public void run()
     {
         System.out.println("\nDriving thread started. Executing ride...");
-        myData.setRidingState(true);
         try {
-            Thread.sleep(5000);
+            //Thread.sleep(15000);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -56,14 +55,17 @@ public class TaxiRideThread extends Thread
         updateData();
         sendUpdateToRestServer();
 
-        synchronized (myData.isExiting) {
-            if (myData.isExiting) {
-                // Send statistics to REST server
-                sendLocalStatsToRestServer();
-            }
+        if (myData.isExiting) {
+            // Send statistics to REST server
+            sendLocalStatsToRestServer();
         }
 
-        System.out.println(myData);
+        myData.setRidingState(false);
+
+        if (myData.getBatteryLevel() < 30)
+        {
+            // Start charging thread
+        }
     }
 
     private void updateData()
@@ -72,7 +74,6 @@ public class TaxiRideThread extends Thread
 
         // Update my TaxiData
         myData.reduceBattery(totalTraveledKm);
-        myData.setRidingState(false);
 
         // Update local stats
         myLocalStats.addRideToStat(totalTraveledKm, myData.getBatteryLevel());
