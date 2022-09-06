@@ -14,7 +14,7 @@ public class TaxiData
     public final int port;
 
     // === Working data ===
-    public double batteryLevel = 100;
+    public double batteryLevel = 40;
     public GridCell currentPosition;
     public volatile Boolean isRiding = false;
     public volatile Boolean isExiting = false;

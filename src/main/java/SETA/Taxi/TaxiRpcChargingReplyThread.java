@@ -5,21 +5,21 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import project.taxi.grpc.TaxiGrpc;
-import project.taxi.grpc.TaxiOuterClass.*;
+import project.taxi.grpc.TaxiOuterClass;
 
-public class TaxiRpcRequestChargingThread extends Thread
+public class TaxiRpcChargingReplyThread extends Thread
 {
     TaxiData myData;
-    TaxiData otherTaxiServer;
+    int otherTaxiId;
+    int otherTaxiPort;
     final ManagedChannel channel;
 
-    public TaxiRpcRequestChargingThread(TaxiData myData, TaxiData otherTaxiServer)
+    public TaxiRpcChargingReplyThread(TaxiData myData, int otherTaxiId, int otherTaxiPort)
     {
         this.myData = myData;
-        this.otherTaxiServer = otherTaxiServer;
-        channel = ManagedChannelBuilder.forTarget("localhost:" + otherTaxiServer.getPort()).usePlaintext().build();
-
-        TaxiProcess.chargingQueue.clear();
+        this.otherTaxiId = otherTaxiId;
+        this.otherTaxiPort = otherTaxiPort;
+        channel = ManagedChannelBuilder.forTarget("localhost:" + otherTaxiPort).usePlaintext().build();
     }
 
     @Override
@@ -27,22 +27,18 @@ public class TaxiRpcRequestChargingThread extends Thread
     {
         TaxiGrpc.TaxiStub stub = TaxiGrpc.newStub(channel);
 
-        ChargingRequest request = ChargingRequest.newBuilder()
+        TaxiOuterClass.ChargingReply reply = TaxiOuterClass.ChargingReply.newBuilder()
                 .setTaxiId(myData.ID)
-                .setDistrict(GridHelper.getDistrict(myData.getPosition()))
-                .setTimestamp(TaxiProcess.logicalClock)
                 .build();
 
-        stub.requestCharging(request, new StreamObserver<Ack>()
+        stub.replyCharging(reply, new StreamObserver<TaxiOuterClass.Null>()
         {
             @Override
-            public void onNext(Ack value)
+            public void onNext(TaxiOuterClass.Null value)
             {
                 synchronized (TaxiProcess.chargingRequestReceivers) {
-                    TaxiProcess.chargingRequestReceivers.remove(otherTaxiServer.getID());
+                    TaxiProcess.chargingRequestReceivers.remove(otherTaxiId);
                 }
-
-                System.out.println("\nCharging ACK from " + otherTaxiServer.getID());
             }
 
             @Override

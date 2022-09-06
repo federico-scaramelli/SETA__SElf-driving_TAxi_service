@@ -16,6 +16,7 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.Random;
 
@@ -45,7 +46,7 @@ public class TaxiProcess
     // Charging
     static final Integer logicalClockOffset = new Random().nextInt(100);
     static Integer logicalClock = 0;
-    public final static ArrayList<TaxiData> chargingRequestReceivers = new ArrayList<>();
+    public final static HashMap<Integer, TaxiData> chargingRequestReceivers = new HashMap<>();
     public final static PriorityQueue<TaxiChargingRequest> chargingQueue = new PriorityQueue<TaxiChargingRequest>();
 
 
@@ -216,12 +217,15 @@ public class TaxiProcess
         // Broadcast request
         synchronized (chargingRequestReceivers) {
             chargingRequestReceivers.clear();
-            chargingRequestReceivers.addAll(taxiList);
+            for (TaxiData t : taxiList) {
+                chargingRequestReceivers.put(t.ID, t);
+            }
+            chargingRequestReceivers.put(myData.getID(), myData);
         }
 
-        for (TaxiData t : chargingRequestReceivers)
-        {
-            TaxiRpcRequestChargingThread chargingThread = new TaxiRpcRequestChargingThread(myData, t);
+        for(HashMap.Entry<Integer, TaxiData> entry : chargingRequestReceivers.entrySet()) {
+            TaxiData taxi = entry.getValue();
+            TaxiRpcRequestChargingThread chargingThread = new TaxiRpcRequestChargingThread(myData, taxi);
             chargingThread.start();
         }
     }

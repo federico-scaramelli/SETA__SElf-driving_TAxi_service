@@ -2,12 +2,14 @@ package SETA.Taxi;
 
 public class TaxiChargingRequest implements Comparable<TaxiChargingRequest>
 {
-    public TaxiData taxi;
+    public int taxiId;
+    public int taxiPort;
     public Integer timestamp;
 
-    public TaxiChargingRequest(TaxiData taxi, Integer timestamp)
+    public TaxiChargingRequest(int taxiId, int taxiPort, Integer timestamp)
     {
-        this.taxi = taxi;
+        this.taxiId = taxiId;
+        this.taxiPort = taxiPort;
         this.timestamp = timestamp;
     }
 
@@ -17,7 +19,7 @@ public class TaxiChargingRequest implements Comparable<TaxiChargingRequest>
             return -1;
         if (timestamp < o.timestamp)
             return 1;
-        if (taxi.getID() < o.taxi.getID())
+        if (taxiId < o.taxiId)
             return -1;
         return 1;
     }

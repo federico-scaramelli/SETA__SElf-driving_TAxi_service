@@ -39,7 +39,6 @@ public class TaxiRideThread extends Thread
         }
 
         int myDistrict = GridHelper.getDistrict(myData.getPosition());
-        System.out.println("Arrived at destination " + myRide.destinationPos);
         myData.setPosition(myRide.destinationPos);
 
         if (GridHelper.getDistrict(myRide.destinationPos) != myDistrict) {
@@ -55,6 +54,9 @@ public class TaxiRideThread extends Thread
         updateData();
         sendUpdateToRestServer();
 
+        System.out.println("Arrived at destination " + myRide.destinationPos + " with " +
+                myData.getBatteryLevel() + " of battery remained.");
+
         if (myData.isExiting) {
             // Send statistics to REST server
             sendLocalStatsToRestServer();
@@ -64,7 +66,7 @@ public class TaxiRideThread extends Thread
 
         if (myData.getBatteryLevel() < 30)
         {
-            // Start charging thread
+            TaxiProcess.startChargingProcess();
         }
     }
 

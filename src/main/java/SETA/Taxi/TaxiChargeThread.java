@@ -9,7 +9,7 @@ public class TaxiChargeThread extends Thread
     ManagedChannel channel;
 
 
-    public void TaxiChargeThread(TaxiData myData)
+    public TaxiChargeThread(TaxiData myData)
     {
         this.myData = myData;
     }
@@ -20,16 +20,23 @@ public class TaxiChargeThread extends Thread
     {
         // Recharge!
         try {
-            Thread.sleep(10000);
+            Thread.sleep(1000);
         } catch (Exception e) {}
 
         myData.setBattery(100);
+        System.out.println(myData);
 
+        // Recharge completed, notify enqueued taxis
         for (TaxiChargingRequest t : TaxiProcess.chargingQueue)
         {
-            channel = ManagedChannelBuilder.forTarget("localhost:" + t.taxi.getPort()).usePlaintext().build();
+            channel = ManagedChannelBuilder.forTarget("localhost:" + t.taxiPort).usePlaintext().build();
 
-            // Needs a new thread to send reply about charging (like an ACK but it's not an answer)
+            TaxiRpcChargingReplyThread replyThread = new TaxiRpcChargingReplyThread(myData, t.taxiId, t.taxiPort);
+            replyThread.start();
         }
+
+        // And terminate the charging process
+        myData.isCharging = false;
+        myData.queuedForCharging = false;
     }
 }

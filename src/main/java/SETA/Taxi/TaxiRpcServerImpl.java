@@ -24,7 +24,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
     public void notifyJoin(StartingTaxiInfo startingInfo, StreamObserver<Ack> ackStreamObserver)
     {
         System.out.println("\nRPC Server: Taxi " + startingInfo.getId() + " has joined the Smart City.");
-        // I'm passing also the address but for this project it's hard-coded as localhost so I don't use it
+        // I'm passing also the address but for this project it's hard-coded as localhost, so I don't use it
         TaxiData newTaxi = new TaxiData(startingInfo.getId(), startingInfo.getPort());
         newTaxi.setPosition(new GridCell(startingInfo.getPos().getX(), startingInfo.getPos().getY()));
         newTaxi.setBattery(startingInfo.getBattery());
@@ -179,5 +179,65 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         }
         nullStreamObserver.onNext(Null.newBuilder().build());
         nullStreamObserver.onCompleted();
+    }
+
+    @Override
+    public void requestCharging(ChargingRequest request, StreamObserver<Ack> ackStreamObserver)
+    {
+        if (request.getTaxiId() == myData.getID())
+        {
+            Ack ack = Ack.newBuilder().setAck(true).build();
+            ackStreamObserver.onNext(ack);
+            ackStreamObserver.onCompleted();
+            return;
+        }
+
+        // Different district -> Send ACK since I'm not interested on charging in that station
+        if (GridHelper.getDistrict(myData.getPosition()) != request.getDistrict())
+        {
+            Ack ack = Ack.newBuilder().setAck(true).build();
+            ackStreamObserver.onNext(ack);
+            ackStreamObserver.onCompleted();
+            return;
+        }
+
+        if (!myData.isCharging && !myData.queuedForCharging)
+        {
+            Ack ack = Ack.newBuilder().setAck(true).build();
+            ackStreamObserver.onNext(ack);
+            ackStreamObserver.onCompleted();
+            return;
+        }
+
+        TaxiChargingRequest receivedRequest =
+                new TaxiChargingRequest(request.getTaxiId(), request.getTaxiPort(), request.getTimestamp());
+        if (myData.isCharging)
+        {
+            TaxiProcess.chargingQueue.add(receivedRequest);
+            return;
+        }
+
+        if (myData.queuedForCharging)
+        {
+            TaxiChargingRequest myRequest =
+                    new TaxiChargingRequest(myData.getID(), myData.getPort(), TaxiProcess.logicalClock);
+
+            // My request has the priority wrt the received one
+            if (myRequest.compareTo(receivedRequest) > 0)
+            {
+                // Enqueue
+                TaxiProcess.chargingQueue.add(receivedRequest);
+            } else {
+                Ack ack = Ack.newBuilder().setAck(true).build();
+                ackStreamObserver.onNext(ack);
+                ackStreamObserver.onCompleted();
+            }
+        }
+    }
+
+    @Override
+    public void replyCharging(ChargingReply reply, StreamObserver<Null> nullStreamObserver)
+    {
+
     }
 }

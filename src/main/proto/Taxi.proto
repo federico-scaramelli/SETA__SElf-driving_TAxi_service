@@ -57,8 +57,14 @@ message InterestedToCompetition
 message ChargingRequest
 {
     int32 taxiId    = 1;
-    int32 district  = 2;
-    int32 timestamp = 3;
+    int32 taxiPort  = 2;
+    int32 district  = 3;
+    int32 timestamp = 4;
+}
+
+message ChargingReply
+{
+    int32 taxiId    = 1;
 }
 
 service Taxi
@@ -68,4 +74,5 @@ service Taxi
     rpc competeForRide (CompeteRequestData) returns (InterestedToCompetition);
     rpc confirmRideTaken (RideId) returns (Ack);
     rpc requestCharging (ChargingRequest) returns (Ack);
+    rpc replyCharging (ChargingReply) returns (Null);
 }
