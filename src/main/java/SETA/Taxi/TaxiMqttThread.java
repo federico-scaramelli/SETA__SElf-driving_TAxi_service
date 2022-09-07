@@ -8,19 +8,24 @@ import org.eclipse.paho.client.mqttv3.*;
 
 public class TaxiMqttThread extends Thread
 {
-    private static final String brokerAddress = "tcp://localhost:1883";
-    private static final Gson serializer = new Gson();
+    private final String brokerAddress = "tcp://localhost:1883";
+    private final Gson serializer = new Gson();
     public static final String topicBasePath = "seta/smartcity/rides/district";
     public static final int qos = 2;
-
-    public TaxiData myData;
-    public Statistics localStatistics;
     static MqttClient mqttClient = null;
     static String topic = null;
 
-    public TaxiMqttThread(TaxiData myData, Statistics localStatistics)
+
+    final public TaxiData myData;
+    final TaxiRidesData myRidesData;
+    final TaxiChargingData myChargingData;
+    final public Statistics localStatistics;
+
+    public TaxiMqttThread(TaxiData myData, TaxiRidesData myRidesData, TaxiChargingData myChargingData, Statistics localStatistics)
     {
         this.myData = myData;
+        this.myRidesData = myRidesData;
+        this.myChargingData = myChargingData;
         this.localStatistics = localStatistics;
     }
 
@@ -31,7 +36,6 @@ public class TaxiMqttThread extends Thread
 
         try {
             mqttClient = new MqttClient(brokerAddress, mqttClientID, null);
-            // Request a persistent session
             mqttClient.connect();
 
             mqttClient.setCallback(new MqttCallback() {
@@ -49,10 +53,7 @@ public class TaxiMqttThread extends Thread
                 }
 
                 @Override
-                public void deliveryComplete(IMqttDeliveryToken token) {
-                    // Actually not working because I don't send ACK
-                    System.out.println("Message successfully delivered to the MQTT broker.");
-                }
+                public void deliveryComplete(IMqttDeliveryToken token) { }
             });
 
             topic = topicBasePath + GridHelper.getDistrict(myData.getPosition());
@@ -68,18 +69,35 @@ public class TaxiMqttThread extends Thread
     private void handleRideRequestReceiving(RideRequest rideRequest)
     {
         System.out.println("\nReceived from MQTT broker: " + rideRequest);
-        // Ignore the ride request if you are not available
-        synchronized (TaxiProcess.completedRides) {
-            if (myData.isRiding                                                 // Riding
-                    || myData.isExiting                                         // Exiting
-                    || myData.getBatteryLevel() <= 30                           // Charging
-                    || TaxiProcess.completedRides.contains(rideRequest.ID))     // Already taken
-            {
-                System.out.println("Request " + rideRequest + " ignored.");
-            } else {
-                TaxiProcess.joinCompetition(rideRequest);
+
+        synchronized (myRidesData)
+        {
+            if (myRidesData.isRiding || myRidesData.completedRides.contains(rideRequest.ID)) {
+                System.out.println("Request " + rideRequest + " ignored because " +
+                                    "I'm running or it has been already taken.");
+                return;
             }
         }
+
+        synchronized (myData.isQuitting)
+        {
+            if (myData.isQuitting)
+            {
+                System.out.println("Request " + rideRequest + " ignored because I'm quitting the Smart City.");
+                return;
+            }
+        }
+
+        synchronized (myChargingData)
+        {
+            if (myChargingData.isCharging || myChargingData.chargeCommandReceived)
+            {
+                System.out.println("Request " + rideRequest + " ignored because I'm charging or I have to do it.");
+                return;
+            }
+        }
+
+        TaxiProcess.joinCompetition(rideRequest);
     }
 
     public void notifySetaRequestTaken(RideRequest request) throws MqttException

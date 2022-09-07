@@ -17,8 +17,6 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.PriorityQueue;
-import java.util.Random;
 
 public class TaxiProcess
 {
@@ -37,18 +35,11 @@ public class TaxiProcess
     private static TaxiData myData = new TaxiData();
     private static Statistics localStatistics = null;
 
-    // Rides
-    private static TaxiRideThread taxiRideThread = null;
-    public static RideRequest currentRideRequest = null;
-    static final ArrayList<Integer> completedRides = new ArrayList<>();
-    public final static ArrayList<TaxiData> rideCompetitors = new ArrayList<>();
+    // Rides data container - Used as lock to synchronize and to organize the data into subclasses
+    private static final TaxiRidesData myRidesData = new TaxiRidesData();
 
-    // Charging
-    static final Integer logicalClockOffset = new Random().nextInt(100);
-    static Integer logicalClock = 0;
-    public final static HashMap<Integer, TaxiData> chargingCompetitors = new HashMap<>();
-    public final static PriorityQueue<TaxiChargingRequest> chargingQueue = new PriorityQueue<TaxiChargingRequest>();
-    public static TaxiChargingRequest currentRechargeRequest = null;
+    // Charging data container - Used as lock to synchronize and to organize the data into subclasses
+    private static final TaxiChargingData myChargingData = new TaxiChargingData();
 
 
     public static void main(String[] argv) throws IOException, InterruptedException
@@ -85,7 +76,7 @@ public class TaxiProcess
             System.out.println("Successfully connected to the Smart City.\n");
             System.out.println("Response received from the server:\n" + addTaxiResponse.toString());
             System.out.println("\nStarting data:\n" + myData.toString());
-            System.out.println("Logical Clock offset: " + logicalClockOffset);
+            System.out.println("Logical Clock offset: " + myChargingData.logicalClockOffset);
 
         } catch (Exception e) {
             System.out.println(e.toString());
@@ -110,7 +101,7 @@ public class TaxiProcess
         //region ======= RPC =======
         // RPC Server
         Server rpcServer = ServerBuilder.forPort(myData.port)
-                .addService(new TaxiRpcServerImpl(myData, taxiList)).build();
+                .addService(new TaxiRpcServerImpl(myData, myRidesData, myChargingData, taxiList)).build();
         TaxiRpcServerThread rpcThread = new TaxiRpcServerThread(rpcServer);
         rpcThread.start();
 
@@ -125,17 +116,17 @@ public class TaxiProcess
         //endregion
 
         // === Input thread ===
-        TaxiInputThread quitThread = new TaxiInputThread(myData, taxiList);
+        TaxiInputThread quitThread = new TaxiInputThread(myData, myRidesData, myChargingData, taxiList);
         quitThread.start();
         System.out.println("\nInsert 'quit' to quit the Smart City.");
 
         //======= MQTT BROKER CONNECTION =======
-        mqttThread = new TaxiMqttThread(myData, localStatistics);
+        mqttThread = new TaxiMqttThread(myData, myRidesData, myChargingData, localStatistics);
         mqttThread.start();
 
         // Wait until the quit thread has done
         quitThread.join();
-        if (!myData.isExiting) return;
+        if (!myData.isQuitting) return;
         //while (!myData.exited) {}
 
         // === Request to remove the taxi from the Smart City ===
@@ -161,17 +152,19 @@ public class TaxiProcess
 
     public synchronized static void joinCompetition(RideRequest request)
     {
-        currentRideRequest = request;
-
-        synchronized (rideCompetitors) {
-            rideCompetitors.clear();
-            rideCompetitors.addAll(taxiList);
-        }
-
-        for (TaxiData t : rideCompetitors)
+        synchronized (myRidesData)
         {
-            TaxiRpcCompetitionThread competitionThread = new TaxiRpcCompetitionThread(myData, t, request);
-            competitionThread.start();
+            myRidesData.currentRideRequest = request;
+            myRidesData.rideCompetitors.clear();
+            myRidesData.rideCompetitors.addAll(taxiList);
+            myRidesData.competitorsCounter = myRidesData.rideCompetitors.size();
+
+            for (TaxiData t : myRidesData.rideCompetitors)
+            {
+                TaxiRpcCompetitionThread competitionThread =
+                        new TaxiRpcCompetitionThread(myData, myRidesData, myChargingData, t, request);
+                competitionThread.start();
+            }
         }
     }
 
@@ -179,12 +172,18 @@ public class TaxiProcess
     {
         mqttThread.notifySetaRequestTaken(request);
 
-        completedRides.add(request.ID);
-        for (TaxiData t : taxiList)
-        {
-            if (t == myData) continue;
-            TaxiRpcConfirmRideThread confirmationThread = new TaxiRpcConfirmRideThread(t, request);
-            confirmationThread.start();
+        synchronized (myRidesData) {
+            // Add the ride to the completed rides list
+            myRidesData.completedRides.add(request.ID);
+
+            //Notify all the taxis about the completed ride
+            for (TaxiData otherTaxi : taxiList) {
+                // Do not notify myself
+                if (otherTaxi == myData) continue;
+
+                TaxiRpcConfirmRideThread confirmationThread = new TaxiRpcConfirmRideThread(otherTaxi, request);
+                confirmationThread.start();
+            }
         }
 
         startRide(request);
@@ -192,16 +191,18 @@ public class TaxiProcess
 
     public static void startRide(RideRequest request)
     {
-        // === Rides thread ===
-        taxiRideThread = new TaxiRideThread(myData, localStatistics, request);
-        taxiRideThread.start();
-
-        currentRideRequest = null;
+        // === Thread to actually execute the ride ===
+        myRidesData.taxiRideThread = new TaxiRideThread(myData, myRidesData, myChargingData, localStatistics, request);
+        myRidesData.taxiRideThread.start();
+        synchronized (myRidesData.currentRideRequest) {
+            myRidesData.currentRideRequest = null;
+        }
     }
 
     public static void startChargingProcess()
     {
-        currentRechargeRequest = new TaxiChargingRequest(myData.getID(), myData.getPort(), TaxiProcess.logicalClock);
+        myChargingData.currentRechargeRequest =
+                new TaxiChargingRequest(myData.getID(), myData.getPort(), myChargingData.logicalClock);
         System.out.println("\nRecharging process started...");
 
         // Go to the charging station
@@ -212,21 +213,22 @@ public class TaxiProcess
         System.out.println("\nArrived at recharge station.");
 
         // Update logical clock since you are sending a messages
-        logicalClock += logicalClockOffset;
-        System.out.println("\nLogical clock value: " + logicalClock);
+        myChargingData.logicalClock += myChargingData.logicalClockOffset;
+        System.out.println("\nLogical clock value: " + myChargingData.logicalClock);
 
         // Broadcast request
-        synchronized (chargingCompetitors) {
-            chargingCompetitors.clear();
+        synchronized (myChargingData.chargingCompetitors) {
+            myChargingData.chargingCompetitors.clear();
             for (TaxiData t : taxiList) {
-                chargingCompetitors.put(t.ID, t);
+                myChargingData.chargingCompetitors.put(t.ID, t);
             }
-            chargingCompetitors.put(myData.getID(), myData);
+            myChargingData.chargingCompetitors.put(myData.getID(), myData);
         }
 
-        for(HashMap.Entry<Integer, TaxiData> entry : chargingCompetitors.entrySet()) {
+        for(HashMap.Entry<Integer, TaxiData> entry : myChargingData.chargingCompetitors.entrySet()) {
             TaxiData taxi = entry.getValue();
-            TaxiRpcRequestChargingThread chargingThread = new TaxiRpcRequestChargingThread(myData, taxi);
+            TaxiRpcRequestChargingThread chargingThread =
+                    new TaxiRpcRequestChargingThread(myData, myChargingData, taxi);
             chargingThread.start();
         }
     }

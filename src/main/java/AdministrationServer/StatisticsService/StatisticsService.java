@@ -74,4 +74,6 @@ public class StatisticsService
         //System.out.println(localStats.toString());
         return Response.ok().build();
     }
+
+
 }

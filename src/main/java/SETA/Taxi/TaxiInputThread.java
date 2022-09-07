@@ -7,12 +7,17 @@ import java.util.Scanner;
 public class TaxiInputThread extends Thread
 {
     TaxiData myData;
+    TaxiRidesData myRidesData;
+    TaxiChargingData myChargingData;
     public static ArrayList<TaxiData> taxiList;
     public volatile static ArrayList<TaxiData> taxiToNotify;
 
-    public TaxiInputThread(TaxiData myData, ArrayList<TaxiData> myList)
+    public TaxiInputThread(TaxiData myData, TaxiRidesData myRidesData, TaxiChargingData myChargingData,
+                           ArrayList<TaxiData> myList)
     {
         this.myData = myData;
+        this.myRidesData = myRidesData;
+        this.myChargingData = myChargingData;
         taxiList = myList;
     }
 
@@ -29,24 +34,24 @@ public class TaxiInputThread extends Thread
                 break;
             } else if (Objects.equals(command, "recharge"))
             {
-                if (myData.explicitChargingRequest) {
+                if (myChargingData.chargeCommandReceived) {
                     System.out.println("Recharge already requested...");
                     continue;
                 }
 
-                if (myData.isCharging) {
+                if (myChargingData.isCharging) {
                     System.out.println("Recharge not available now. You're already recharging.");
                     continue;
                 }
 
-                if (TaxiProcess.currentRechargeRequest != null) {
+                if (myChargingData.currentRechargeRequest != null) {
                     System.out.println("Recharge not available now. You're already enqueued for recharging.");
                     continue;
                 }
 
-                if (myData.isRiding || TaxiProcess.currentRideRequest != null) {
+                if (myRidesData.isRiding || myRidesData.currentRideRequest != null) {
                     System.out.println("Recharge requested. Waiting for it...");
-                    myData.explicitChargingRequest = true;
+                    myChargingData.chargeCommandReceived = true;
                     continue;
                 }
 
@@ -67,8 +72,8 @@ public class TaxiInputThread extends Thread
 
     private void Quit()
     {
-        synchronized (myData.isExiting) {
-            myData.isExiting = true;
+        synchronized (myData.isQuitting) {
+            myData.isQuitting = true;
         }
 
         taxiToNotify = new ArrayList<>();
@@ -84,9 +89,9 @@ public class TaxiInputThread extends Thread
         while (!taxiToNotify.isEmpty()) {  }
         System.out.println("DAJE!");
 
-        while (myData.isRiding) {}
+        while (myRidesData.isRiding) {}
 
-        while (myData.isCharging) {}
+        while (myChargingData.isCharging) {}
 
         System.out.println("ADIOS!");
     }

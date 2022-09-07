@@ -37,9 +37,7 @@ public class TaxiRpcConfirmRideThread extends Thread
 
         stub.confirmRideTaken(rideId, new StreamObserver<TaxiOuterClass.Ack>() {
             @Override
-            public void onNext(TaxiOuterClass.Ack value) {
-//                System.out.println("ACK! From " + otherTaxiServer.getID());
-            }
+            public void onNext(TaxiOuterClass.Ack value) { }
 
             @Override
             public void onError(Throwable t) {
@@ -49,7 +47,6 @@ public class TaxiRpcConfirmRideThread extends Thread
 
             @Override
             public void onCompleted() {
-                System.out.println("Completed RPC client [Ride confirmation " + request.ID + "]");
                 channel.shutdownNow();
             }
         });

@@ -14,12 +14,11 @@ public class TaxiData
     public final int port;
 
     // === Working data ===
-    public double batteryLevel = 100;
+    public Double batteryLevel = Double.valueOf(100);
     public GridCell currentPosition;
-    public volatile Boolean isRiding = false;
-    public volatile Boolean isExiting = false;
-    public volatile Boolean isCharging = false;
-    public volatile Boolean explicitChargingRequest = false;
+
+    // Flag
+    public transient volatile Boolean isQuitting = false;
 
     // === Constructors === //
     // Custom ID and port constructor
@@ -51,7 +50,6 @@ public class TaxiData
     // === Setters ===
     public synchronized void setPosition(GridCell newPosition) { this.currentPosition = newPosition; }
     public synchronized void setBattery(double battery) { this.batteryLevel = battery; }
-    public void setRidingState(boolean b) { isRiding = b; }
 
 
     // === Utils ===

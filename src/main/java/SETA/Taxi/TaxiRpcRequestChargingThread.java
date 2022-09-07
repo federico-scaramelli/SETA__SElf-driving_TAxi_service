@@ -9,17 +9,19 @@ import project.taxi.grpc.TaxiOuterClass.*;
 
 public class TaxiRpcRequestChargingThread extends Thread
 {
-    TaxiData myData;
-    TaxiData otherTaxiServer;
+    final TaxiData myData;
+    final TaxiChargingData myChargingData;
+    final TaxiData otherTaxiServer;
     final ManagedChannel channel;
 
-    public TaxiRpcRequestChargingThread(TaxiData myData, TaxiData otherTaxiServer)
+    public TaxiRpcRequestChargingThread(TaxiData myData, TaxiChargingData myChargingData, TaxiData otherTaxiServer)
     {
         this.myData = myData;
+        this.myChargingData = myChargingData;
         this.otherTaxiServer = otherTaxiServer;
         channel = ManagedChannelBuilder.forTarget("localhost:" + otherTaxiServer.getPort()).usePlaintext().build();
 
-        TaxiProcess.chargingQueue.clear();
+        myChargingData.chargingQueue.clear();
     }
 
     @Override
@@ -31,7 +33,7 @@ public class TaxiRpcRequestChargingThread extends Thread
                 .setTaxiId(myData.ID)
                 .setTaxiPort(myData.port)
                 .setDistrict(GridHelper.getDistrict(myData.getPosition()))
-                .setTimestamp(TaxiProcess.logicalClock)
+                .setTimestamp(myChargingData.logicalClock)
                 .build();
 
         stub.requestCharging(request, new StreamObserver<Ack>()
@@ -39,8 +41,8 @@ public class TaxiRpcRequestChargingThread extends Thread
             @Override
             public void onNext(Ack value)
             {
-                synchronized (TaxiProcess.chargingCompetitors) {
-                    TaxiProcess.chargingCompetitors.remove(otherTaxiServer.getID());
+                synchronized (myChargingData.chargingCompetitors) {
+                    myChargingData.chargingCompetitors.remove(otherTaxiServer.getID());
                 }
 
                 System.out.println("\nCharging ACK from " + otherTaxiServer.getID());
@@ -59,13 +61,13 @@ public class TaxiRpcRequestChargingThread extends Thread
                 channel.shutdownNow();
 
                 // Received all the ACK! Take the recharge station!
-                synchronized (TaxiProcess.chargingCompetitors) {
-                    if (myData.isCharging)
+                synchronized (myChargingData.chargingCompetitors) {
+                    if (myChargingData.isCharging)
                         return;
 
-                    if (TaxiProcess.chargingCompetitors.isEmpty()) {
-                        myData.isCharging = true;
-                        TaxiChargeThread chargeThread = new TaxiChargeThread(myData);
+                    if (myChargingData.chargingCompetitors.isEmpty()) {
+                        myChargingData.isCharging = true;
+                        TaxiChargeThread chargeThread = new TaxiChargeThread(myData, myChargingData);
                         chargeThread.start();
                     }
                 }

@@ -18,14 +18,19 @@ public class TaxiRideThread extends Thread
     Client client = Client.create();
 
     private final TaxiData myData;
+    private final TaxiRidesData myRidesData;
+    private final TaxiChargingData myChargingData;
     private final Statistics myLocalStats;
-    volatile public RideRequest myRide = null;
+    volatile public RideRequest rideToExecute = null;
 
-    public TaxiRideThread(TaxiData myTaxi, Statistics myLocalStats, RideRequest ride)
+    public TaxiRideThread(TaxiData myTaxi, TaxiRidesData myRidesData, TaxiChargingData myChargingData,
+                          Statistics myLocalStats, RideRequest ride)
     {
         this.myData = myTaxi;
+        this.myRidesData = myRidesData;
+        this.myChargingData = myChargingData;
         this.myLocalStats = myLocalStats;
-        this.myRide = ride;
+        this.rideToExecute = ride;
     }
 
     @Override
@@ -38,52 +43,78 @@ public class TaxiRideThread extends Thread
             e.printStackTrace();
         }
 
-        int myDistrict = GridHelper.getDistrict(myData.getPosition());
-        myData.setPosition(myRide.destinationPos);
+        int myDistrict;
+        synchronized (myData.currentPosition) {
+            myDistrict = GridHelper.getDistrict(myData.getPosition());
+            myData.setPosition(rideToExecute.destinationPos);
+        }
 
-        if (GridHelper.getDistrict(myRide.destinationPos) != myDistrict) {
+        if (GridHelper.getDistrict(rideToExecute.destinationPos) != myDistrict) {
             // Change topic
             try {
-                myDistrict = GridHelper.getDistrict(myRide.destinationPos);
+                myDistrict = GridHelper.getDistrict(rideToExecute.destinationPos);
                 TaxiMqttThread.changeTopic(myDistrict);
             } catch (MqttException e) {
                 e.printStackTrace();
             }
         }
 
-        updateData();
+        updateLocalData();
         sendUpdateToRestServer();
 
-        System.out.println("Arrived at destination " + myRide.destinationPos + " with " +
+        System.out.println("Arrived at destination " + rideToExecute.destinationPos + " with " +
                 myData.getBatteryLevel() + " of battery remained.");
 
-        myData.setRidingState(false);
-
-        if (myData.isExiting) {
-            // Send statistics to REST server
-            sendLocalStatsToRestServer();
-            return;
+        synchronized (myRidesData) {
+            myRidesData.isRiding = false;
         }
 
-        if (myData.getBatteryLevel() < 30 || myData.explicitChargingRequest)
-        {
-            TaxiProcess.startChargingProcess();
+        // If I received the recharge command, recharge
+        synchronized (myChargingData) {
+            if (myChargingData.chargeCommandReceived) {
+                TaxiProcess.startChargingProcess();
+                return;
+            }
+        }
+
+        // If I'm quitting, send local stats
+        synchronized (myData.isQuitting) {
+            if (myData.isQuitting) {
+                // Send statistics to REST server
+                sendLocalStatsToRestServer();
+                return;
+            }
+        }
+
+        // If my battery is too low, recharge
+        synchronized (myData.batteryLevel) {
+            if (myData.getBatteryLevel() < 30) {
+                TaxiProcess.startChargingProcess();
+            }
         }
     }
 
-    private void updateData()
+    private void updateLocalData()
     {
-        double totalTraveledKm = myRide.getKm() + GridHelper.getDistance(myData.getPosition(), myRide.startingPos);
+        System.out.println("Updating my local data.");
+        double totalTraveledKm = rideToExecute.getKm() + GridHelper.getDistance(myData.getPosition(),
+                                 rideToExecute.startingPos);
 
-        // Update my TaxiData
-        myData.reduceBattery(totalTraveledKm);
+        synchronized (myData.batteryLevel) {
+            // Update my TaxiData
+            myData.reduceBattery(totalTraveledKm);
 
-        // Update local stats
-        myLocalStats.addRideToStat(totalTraveledKm, myData.getBatteryLevel());
+            synchronized (myLocalStats) {
+                // Update local stats
+                myLocalStats.addRideToStat(totalTraveledKm, myData.getBatteryLevel());
+            }
+        }
     }
 
     private void sendUpdateToRestServer()
     {
+        System.out.println("Sending updated data to the rest server.");
+
         String serializedStats = serializer.toJson(myData);
         WebResource webResource = client.resource(TaxiProcess.adminServerAddress + updateTaxiDataPath);
         ClientResponse clientResponse = webResource
@@ -102,6 +133,8 @@ public class TaxiRideThread extends Thread
 
     private void sendLocalStatsToRestServer()
     {
+        System.out.println("Sending local stats to the rest server before quitting.");
+
         Statistics statsCopy;
         synchronized (myLocalStats)
         {

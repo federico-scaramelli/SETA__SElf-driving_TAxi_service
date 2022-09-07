@@ -2,11 +2,13 @@ package SETA.Taxi;
 
 public class TaxiChargeThread extends Thread
 {
-    TaxiData myData;
+    final TaxiData myData;
+    final TaxiChargingData myChargingData;
 
-    public TaxiChargeThread(TaxiData myData)
+    public TaxiChargeThread(TaxiData myData, TaxiChargingData myChargingData)
     {
         this.myData = myData;
+        this.myChargingData = myChargingData;
     }
 
 
@@ -24,7 +26,7 @@ public class TaxiChargeThread extends Thread
         System.out.println("Charging terminated. Sending reply to the queue...");
 
         // Recharge completed, notify enqueued taxis
-        for (TaxiChargingRequest t : TaxiProcess.chargingQueue)
+        for (TaxiChargingRequest t : myChargingData.chargingQueue)
         {
             System.out.println("Sending reply to " + t.taxiId + " at port " + t.taxiPort);
 
@@ -33,8 +35,8 @@ public class TaxiChargeThread extends Thread
         }
 
         // And terminate the charging process
-        myData.isCharging = false;
-        TaxiProcess.currentRechargeRequest = null;
+        myChargingData.isCharging = false;
+        myChargingData.currentRechargeRequest = null;
 
         System.out.println("Charging process ended.");
     }
