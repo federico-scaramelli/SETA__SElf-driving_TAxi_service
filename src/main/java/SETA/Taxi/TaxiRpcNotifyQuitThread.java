@@ -43,7 +43,7 @@ public class TaxiRpcNotifyQuitThread extends Thread
             @Override
             public void onCompleted()
             {
-                TaxiQuitThread.taxiToNotify.remove(otherTaxiServer);
+                TaxiInputThread.taxiToNotify.remove(otherTaxiServer);
                 System.out.println("Received confirmation from " + otherTaxiServer);
                 channel.shutdownNow();
             }

@@ -41,13 +41,14 @@ public class TaxiProcess
     private static TaxiRideThread taxiRideThread = null;
     public static RideRequest currentRideRequest = null;
     static final ArrayList<Integer> completedRides = new ArrayList<>();
-    public final static ArrayList<TaxiData> currentCompetitors = new ArrayList<>();
+    public final static ArrayList<TaxiData> rideCompetitors = new ArrayList<>();
 
     // Charging
     static final Integer logicalClockOffset = new Random().nextInt(100);
     static Integer logicalClock = 0;
-    public final static HashMap<Integer, TaxiData> chargingRequestReceivers = new HashMap<>();
+    public final static HashMap<Integer, TaxiData> chargingCompetitors = new HashMap<>();
     public final static PriorityQueue<TaxiChargingRequest> chargingQueue = new PriorityQueue<TaxiChargingRequest>();
+    public static TaxiChargingRequest currentRechargeRequest = null;
 
 
     public static void main(String[] argv) throws IOException, InterruptedException
@@ -124,7 +125,7 @@ public class TaxiProcess
         //endregion
 
         // === Input thread ===
-        TaxiQuitThread quitThread = new TaxiQuitThread(myData, taxiList);
+        TaxiInputThread quitThread = new TaxiInputThread(myData, taxiList);
         quitThread.start();
         System.out.println("\nInsert 'quit' to quit the Smart City.");
 
@@ -134,11 +135,11 @@ public class TaxiProcess
 
         // Wait until the quit thread has done
         quitThread.join();
+        if (!myData.isExiting) return;
         //while (!myData.exited) {}
 
         // === Request to remove the taxi from the Smart City ===
         try {
-            String serializedTaxiData = serializer.toJson(myData.getID());
             WebResource webResource = client.resource(adminServerAddress + removeTaxiPath + "/" + myData.ID);
             ClientResponse clientResponse = webResource.delete(ClientResponse.class);
 
@@ -162,12 +163,12 @@ public class TaxiProcess
     {
         currentRideRequest = request;
 
-        synchronized (currentCompetitors) {
-            currentCompetitors.clear();
-            currentCompetitors.addAll(taxiList);
+        synchronized (rideCompetitors) {
+            rideCompetitors.clear();
+            rideCompetitors.addAll(taxiList);
         }
 
-        for (TaxiData t : currentCompetitors)
+        for (TaxiData t : rideCompetitors)
         {
             TaxiRpcCompetitionThread competitionThread = new TaxiRpcCompetitionThread(myData, t, request);
             competitionThread.start();
@@ -200,7 +201,7 @@ public class TaxiProcess
 
     public static void startChargingProcess()
     {
-        myData.queuedForCharging = true;
+        currentRechargeRequest = new TaxiChargingRequest(myData.getID(), myData.getPort(), TaxiProcess.logicalClock);
         System.out.println("\nRecharging process started...");
 
         // Go to the charging station
@@ -210,20 +211,20 @@ public class TaxiProcess
         myData.reduceBattery(distance);
         System.out.println("\nArrived at recharge station.");
 
-        // Update logical clock
+        // Update logical clock since you are sending a messages
         logicalClock += logicalClockOffset;
         System.out.println("\nLogical clock value: " + logicalClock);
 
         // Broadcast request
-        synchronized (chargingRequestReceivers) {
-            chargingRequestReceivers.clear();
+        synchronized (chargingCompetitors) {
+            chargingCompetitors.clear();
             for (TaxiData t : taxiList) {
-                chargingRequestReceivers.put(t.ID, t);
+                chargingCompetitors.put(t.ID, t);
             }
-            chargingRequestReceivers.put(myData.getID(), myData);
+            chargingCompetitors.put(myData.getID(), myData);
         }
 
-        for(HashMap.Entry<Integer, TaxiData> entry : chargingRequestReceivers.entrySet()) {
+        for(HashMap.Entry<Integer, TaxiData> entry : chargingCompetitors.entrySet()) {
             TaxiData taxi = entry.getValue();
             TaxiRpcRequestChargingThread chargingThread = new TaxiRpcRequestChargingThread(myData, taxi);
             chargingThread.start();

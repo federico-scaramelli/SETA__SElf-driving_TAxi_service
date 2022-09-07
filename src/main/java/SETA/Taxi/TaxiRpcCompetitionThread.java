@@ -62,8 +62,8 @@ public class TaxiRpcCompetitionThread extends Thread
                 // Remove from the list not interested or losing taxis
                 if (!interest)
                 {
-                    synchronized (TaxiProcess.currentCompetitors) {
-                        TaxiProcess.currentCompetitors.remove(otherTaxiServer);
+                    synchronized (TaxiProcess.rideCompetitors) {
+                        TaxiProcess.rideCompetitors.remove(otherTaxiServer);
                     }
                 }
             }
@@ -99,21 +99,28 @@ public class TaxiRpcCompetitionThread extends Thread
                     return;
                 }
 
-                // Ride already taken
-                if (myData.isRiding)
+                if (myData.explicitChargingRequest) {
+                    System.out.println("Explicit request to recharge. Dropping the competition.");
+                    TaxiProcess.startChargingProcess();
                     return;
+                }
 
                 // If I win, take the ride
-                if (TaxiProcess.currentCompetitors.isEmpty())
-                {
-                    try {
-                        Thread.sleep(0);
-                        myData.setRidingState(true);
-                        TaxiProcess.takeRide(request);
-                    } catch (MqttException e) {
-                        throw new RuntimeException(e);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
+                synchronized (TaxiProcess.rideCompetitors) {
+                    // Ride already taken
+                    if (myData.isRiding)
+                        return;
+
+                    if (TaxiProcess.rideCompetitors.isEmpty()) {
+                        try {
+                            Thread.sleep(0);
+                            myData.setRidingState(true);
+                            TaxiProcess.takeRide(request);
+                        } catch (MqttException e) {
+                            throw new RuntimeException(e);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                 }
             }

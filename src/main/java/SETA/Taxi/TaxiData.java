@@ -14,12 +14,12 @@ public class TaxiData
     public final int port;
 
     // === Working data ===
-    public double batteryLevel = 40;
+    public double batteryLevel = 100;
     public GridCell currentPosition;
     public volatile Boolean isRiding = false;
     public volatile Boolean isExiting = false;
-    public volatile Boolean queuedForCharging = false;
     public volatile Boolean isCharging = false;
+    public volatile Boolean explicitChargingRequest = false;
 
     // === Constructors === //
     // Custom ID and port constructor

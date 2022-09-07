@@ -33,7 +33,7 @@ public class TaxiRideThread extends Thread
     {
         System.out.println("\nDriving thread started. Executing ride...");
         try {
-            //Thread.sleep(15000);
+            Thread.sleep(8000);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -57,14 +57,15 @@ public class TaxiRideThread extends Thread
         System.out.println("Arrived at destination " + myRide.destinationPos + " with " +
                 myData.getBatteryLevel() + " of battery remained.");
 
+        myData.setRidingState(false);
+
         if (myData.isExiting) {
             // Send statistics to REST server
             sendLocalStatsToRestServer();
+            return;
         }
 
-        myData.setRidingState(false);
-
-        if (myData.getBatteryLevel() < 30)
+        if (myData.getBatteryLevel() < 30 || myData.explicitChargingRequest)
         {
             TaxiProcess.startChargingProcess();
         }

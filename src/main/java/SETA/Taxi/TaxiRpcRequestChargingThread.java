@@ -29,6 +29,7 @@ public class TaxiRpcRequestChargingThread extends Thread
 
         ChargingRequest request = ChargingRequest.newBuilder()
                 .setTaxiId(myData.ID)
+                .setTaxiPort(myData.port)
                 .setDistrict(GridHelper.getDistrict(myData.getPosition()))
                 .setTimestamp(TaxiProcess.logicalClock)
                 .build();
@@ -38,8 +39,8 @@ public class TaxiRpcRequestChargingThread extends Thread
             @Override
             public void onNext(Ack value)
             {
-                synchronized (TaxiProcess.chargingRequestReceivers) {
-                    TaxiProcess.chargingRequestReceivers.remove(otherTaxiServer.getID());
+                synchronized (TaxiProcess.chargingCompetitors) {
+                    TaxiProcess.chargingCompetitors.remove(otherTaxiServer.getID());
                 }
 
                 System.out.println("\nCharging ACK from " + otherTaxiServer.getID());
@@ -58,11 +59,15 @@ public class TaxiRpcRequestChargingThread extends Thread
                 channel.shutdownNow();
 
                 // Received all the ACK! Take the recharge station!
-                if (TaxiProcess.chargingRequestReceivers.isEmpty())
-                {
-                    myData.isCharging = true;
-                    TaxiChargeThread chargeThread = new TaxiChargeThread(myData);
-                    chargeThread.start();
+                synchronized (TaxiProcess.chargingCompetitors) {
+                    if (myData.isCharging)
+                        return;
+
+                    if (TaxiProcess.chargingCompetitors.isEmpty()) {
+                        myData.isCharging = true;
+                        TaxiChargeThread chargeThread = new TaxiChargeThread(myData);
+                        chargeThread.start();
+                    }
                 }
             }
         });

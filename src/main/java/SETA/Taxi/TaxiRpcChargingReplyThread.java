@@ -34,12 +34,7 @@ public class TaxiRpcChargingReplyThread extends Thread
         stub.replyCharging(reply, new StreamObserver<TaxiOuterClass.Null>()
         {
             @Override
-            public void onNext(TaxiOuterClass.Null value)
-            {
-                synchronized (TaxiProcess.chargingRequestReceivers) {
-                    TaxiProcess.chargingRequestReceivers.remove(otherTaxiId);
-                }
-            }
+            public void onNext(TaxiOuterClass.Null value) { }
 
             @Override
             public void onError(Throwable t) {
@@ -52,14 +47,6 @@ public class TaxiRpcChargingReplyThread extends Thread
             public void onCompleted()
             {
                 channel.shutdownNow();
-
-                // Received all the ACK! Take the recharge station!
-                if (TaxiProcess.chargingRequestReceivers.isEmpty())
-                {
-                    myData.isCharging = true;
-                    TaxiChargeThread chargeThread = new TaxiChargeThread(myData);
-                    chargeThread.start();
-                }
             }
         });
     }

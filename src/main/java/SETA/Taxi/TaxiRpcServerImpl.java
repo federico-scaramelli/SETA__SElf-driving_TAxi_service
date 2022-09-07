@@ -64,6 +64,14 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
             return;
         }
 
+        // If you have been requested to recharge explicitly, drop the competition answering false
+        if (myData.explicitChargingRequest)
+        {
+            System.out.println("I have to recharge my self since it has been requested explicitly to me.");
+            sendInterest(false, ackStreamObserver);
+            return;
+        }
+
         // If it's a request from myself, answer false
         if (requestData.getTaxiId() == myData.getID())
         {
@@ -157,12 +165,12 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         System.out.println("\nNOTIFICATION! Taxi " + quitNotification.getTaxiId() + " is quitting the city.");
 
         // Remove it from competitor list
-        synchronized (TaxiProcess.currentCompetitors)
+        synchronized (TaxiProcess.rideCompetitors)
         {
-            Optional<TaxiData> result = TaxiProcess.currentCompetitors.stream().parallel()
+            Optional<TaxiData> result = TaxiProcess.rideCompetitors.stream().parallel()
                     .filter(taxi -> taxi.getID() == quitNotification.getTaxiId()).findAny();
             if (result.isPresent()) {
-                TaxiProcess.currentCompetitors.remove(result.get());
+                TaxiProcess.rideCompetitors.remove(result.get());
                 System.out.println("Taxi " + quitNotification.getTaxiId() + " removed from competitors list.");
             }
         }
@@ -184,6 +192,17 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
     @Override
     public void requestCharging(ChargingRequest request, StreamObserver<Ack> ackStreamObserver)
     {
+        if (TaxiProcess.logicalClock < request.getTimestamp())
+        {
+            // Increment logical clock value wtf to the received one since the received request has a grater timestamp
+            TaxiProcess.logicalClock = request.getTimestamp() + TaxiProcess.logicalClockOffset;
+        } else {
+            // Otherwise increment the clock with your offset since you received a message
+            TaxiProcess.logicalClock += TaxiProcess.logicalClockOffset;
+        }
+
+
+        // Request from me, say OK
         if (request.getTaxiId() == myData.getID())
         {
             Ack ack = Ack.newBuilder().setAck(true).build();
@@ -192,7 +211,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
             return;
         }
 
-        // Different district -> Send ACK since I'm not interested on charging in that station
+        // Different district -> Send OK since I'm not interested on charging in that station
         if (GridHelper.getDistrict(myData.getPosition()) != request.getDistrict())
         {
             Ack ack = Ack.newBuilder().setAck(true).build();
@@ -201,7 +220,8 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
             return;
         }
 
-        if (!myData.isCharging && !myData.queuedForCharging)
+        // I'm not interested on battery recharging, say OK
+        if (!myData.isCharging && TaxiProcess.currentRechargeRequest == null)
         {
             Ack ack = Ack.newBuilder().setAck(true).build();
             ackStreamObserver.onNext(ack);
@@ -211,23 +231,26 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
 
         TaxiChargingRequest receivedRequest =
                 new TaxiChargingRequest(request.getTaxiId(), request.getTaxiPort(), request.getTimestamp());
+
+        // I'm charging the battery, enqueue the new request
         if (myData.isCharging)
         {
             TaxiProcess.chargingQueue.add(receivedRequest);
+            System.out.println("\nEnqueueing: " + receivedRequest);
             return;
         }
 
-        if (myData.queuedForCharging)
+        // I'm waiting to charge..
+        if (TaxiProcess.currentRechargeRequest != null)
         {
-            TaxiChargingRequest myRequest =
-                    new TaxiChargingRequest(myData.getID(), myData.getPort(), TaxiProcess.logicalClock);
-
-            // My request has the priority wrt the received one
-            if (myRequest.compareTo(receivedRequest) > 0)
+            // My request has the priority wrt the received one (Smaller timestamp)
+            if (TaxiProcess.currentRechargeRequest.compareTo(receivedRequest) > 0)
             {
                 // Enqueue
                 TaxiProcess.chargingQueue.add(receivedRequest);
+                System.out.println(TaxiProcess.chargingQueue);
             } else {
+                // Say OK since you're request has a greater timestamp
                 Ack ack = Ack.newBuilder().setAck(true).build();
                 ackStreamObserver.onNext(ack);
                 ackStreamObserver.onCompleted();
@@ -238,6 +261,16 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
     @Override
     public void replyCharging(ChargingReply reply, StreamObserver<Null> nullStreamObserver)
     {
+        synchronized (TaxiProcess.chargingCompetitors) {
+            TaxiProcess.chargingCompetitors.remove(reply.getTaxiId());
 
+            // Received all the ACK! Take the recharge station!
+            if (TaxiProcess.chargingCompetitors.isEmpty())
+            {
+                myData.isCharging = true;
+                TaxiChargeThread chargeThread = new TaxiChargeThread(myData);
+                chargeThread.start();
+            }
+        }
     }
 }
