@@ -44,8 +44,6 @@ public class TaxiRpcRequestChargingThread extends Thread
                 synchronized (myChargingData.chargingCompetitors) {
                     myChargingData.chargingCompetitors.remove(otherTaxiServer.getID());
                 }
-
-                System.out.println("\nCharging ACK from " + otherTaxiServer.getID());
             }
 
             @Override
@@ -67,6 +65,11 @@ public class TaxiRpcRequestChargingThread extends Thread
 
                     if (myChargingData.chargingCompetitors.isEmpty()) {
                         myChargingData.isCharging = true;
+
+
+                        try { Thread.sleep(10000); } catch (Exception e) {}
+
+
                         TaxiChargeThread chargeThread = new TaxiChargeThread(myData, myChargingData);
                         chargeThread.start();
                     }

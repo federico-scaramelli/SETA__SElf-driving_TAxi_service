@@ -22,21 +22,25 @@ public class TaxiChargeThread extends Thread
             Thread.sleep(10000);
         } catch (Exception e) {}
 
-        myData.setBattery(100);
+        synchronized (myData.batteryLevel) {
+            myData.setBattery(100);
+        }
         System.out.println("Charging terminated. Sending reply to the queue...");
 
-        // Recharge completed, notify enqueued taxis
-        for (TaxiChargingRequest t : myChargingData.chargingQueue)
-        {
-            System.out.println("Sending reply to " + t.taxiId + " at port " + t.taxiPort);
+        synchronized (myChargingData) {
+            // Recharge completed, notify enqueued taxis
+            for (TaxiChargingRequest t : myChargingData.chargingQueue) {
+                System.out.println("Sending reply to " + t.taxiId + " at port " + t.taxiPort);
 
-            TaxiRpcChargingReplyThread replyThread = new TaxiRpcChargingReplyThread(myData, t.taxiId, t.taxiPort);
-            replyThread.start();
+                TaxiRpcChargingReplyThread replyThread = new TaxiRpcChargingReplyThread(myData, t.taxiId, t.taxiPort);
+                replyThread.start();
+            }
+
+            // And terminate the charging process
+            myChargingData.isCharging = false;
+            myChargingData.chargeCommandReceived = false;
+            myChargingData.currentRechargeRequest = null;
         }
-
-        // And terminate the charging process
-        myChargingData.isCharging = false;
-        myChargingData.currentRechargeRequest = null;
 
         System.out.println("Charging process ended.");
     }

@@ -14,7 +14,7 @@ public class TaxiData
     public final int port;
 
     // === Working data ===
-    public Double batteryLevel = Double.valueOf(100);
+    public Double batteryLevel = Double.valueOf(35);
     public GridCell currentPosition;
 
     // Flag

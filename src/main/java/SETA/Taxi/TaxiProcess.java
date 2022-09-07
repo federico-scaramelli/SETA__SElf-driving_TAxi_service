@@ -158,6 +158,7 @@ public class TaxiProcess
             myRidesData.rideCompetitors.clear();
             myRidesData.rideCompetitors.addAll(taxiList);
             myRidesData.competitorsCounter = myRidesData.rideCompetitors.size();
+            myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Pending;
 
             for (TaxiData t : myRidesData.rideCompetitors)
             {
@@ -175,6 +176,7 @@ public class TaxiProcess
         synchronized (myRidesData) {
             // Add the ride to the completed rides list
             myRidesData.completedRides.add(request.ID);
+            myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Won;
 
             //Notify all the taxis about the completed ride
             for (TaxiData otherTaxi : taxiList) {
@@ -210,11 +212,13 @@ public class TaxiProcess
         double distance = GridHelper.getDistance(myData.getPosition(), stationCell);
         myData.setPosition(stationCell);
         myData.reduceBattery(distance);
-        System.out.println("\nArrived at recharge station.");
+        System.out.println("Arrived at recharge station.");
 
         // Update logical clock since you are sending a messages
-        myChargingData.logicalClock += myChargingData.logicalClockOffset;
-        System.out.println("\nLogical clock value: " + myChargingData.logicalClock);
+        synchronized (myChargingData.logicalClock) {
+            myChargingData.logicalClock += myChargingData.logicalClockOffset;
+        }
+        System.out.println("Logical clock value: " + myChargingData.logicalClock);
 
         // Broadcast request
         synchronized (myChargingData.chargingCompetitors) {

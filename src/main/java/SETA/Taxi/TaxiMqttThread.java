@@ -72,6 +72,12 @@ public class TaxiMqttThread extends Thread
 
         synchronized (myRidesData)
         {
+            if (myRidesData.competitionState == TaxiRidesData.RideCompetitionState.Pending) {
+                System.out.println("Request " + rideRequest + " ignored because " +
+                                    "I'm into a competition for the ride " + myRidesData.currentRideRequest);
+                return;
+            }
+
             if (myRidesData.isRiding || myRidesData.completedRides.contains(rideRequest.ID)) {
                 System.out.println("Request " + rideRequest + " ignored because " +
                                     "I'm running or it has been already taken.");

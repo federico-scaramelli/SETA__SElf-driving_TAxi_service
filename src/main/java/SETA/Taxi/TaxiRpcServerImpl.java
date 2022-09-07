@@ -167,6 +167,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
                                 lastReceivedRequest.startingPos) + " while the distance of competitor is "
                                 + requestData.getDistance());
             sendInterest(false, ackStreamObserver);
+            myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Lose;
             return;
         }
 
@@ -177,6 +178,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         {
             System.out.println("I lost the competition for the ride " + requestData.getRideId());
             sendInterest(false, ackStreamObserver);
+            myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Lose;
         } else {
             System.out.println("I'm competing for the ride " + requestData.getRideId());
             sendInterest(true, ackStreamObserver);
@@ -212,7 +214,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         System.out.println("\nNOTIFICATION! Taxi " + quitNotification.getTaxiId() + " is quitting the city.");
 
         // Remove it from competitor list
-        synchronized (myRidesData)
+        synchronized (myRidesData.rideCompetitors)
         {
             Optional<TaxiData> result = myRidesData.rideCompetitors.stream().parallel()
                     .filter(taxi -> taxi.getID() == quitNotification.getTaxiId()).findAny();
@@ -239,13 +241,17 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
     @Override
     public void requestCharging(ChargingRequest request, StreamObserver<Ack> ackStreamObserver)
     {
-        if (myChargingData.logicalClock < request.getTimestamp())
-        {
-            // Increment logical clock value wtf to the received one since the received request has a grater timestamp
-            myChargingData.logicalClock = request.getTimestamp() + myChargingData.logicalClockOffset;
-        } else {
-            // Otherwise increment the clock with your offset since you received a message
-            myChargingData.logicalClock += myChargingData.logicalClockOffset;
+        System.out.println("Received a request for charging with timestamp " + request.getTimestamp());
+        synchronized (myChargingData.logicalClock) {
+            System.out.println("Logical clock value at receiving: " + myChargingData.logicalClock);
+            if (myChargingData.logicalClock < request.getTimestamp()) {
+                // Increment logical clock value wrt to the received one since the received request has a grater timestamp
+                myChargingData.logicalClock = request.getTimestamp() + 1;
+            } else {
+                // Otherwise increment the clock with your offset since you received a message
+                myChargingData.logicalClock += myChargingData.logicalClockOffset;
+            }
+            System.out.println("Updated logical clock value: " + myChargingData.logicalClock);
         }
 
 
@@ -258,49 +264,48 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
             return;
         }
 
-        // Different district -> Send OK since I'm not interested on charging in that station
-        if (GridHelper.getDistrict(myData.getPosition()) != request.getDistrict())
-        {
-            Ack ack = Ack.newBuilder().setAck(true).build();
-            ackStreamObserver.onNext(ack);
-            ackStreamObserver.onCompleted();
-            return;
-        }
-
-        // I'm not interested on battery recharging, say OK
-        if (!myChargingData.isCharging && myChargingData.currentRechargeRequest == null)
-        {
-            Ack ack = Ack.newBuilder().setAck(true).build();
-            ackStreamObserver.onNext(ack);
-            ackStreamObserver.onCompleted();
-            return;
+        // Different district, say OK since I'm not interested on charging in that station
+        synchronized (myData.currentPosition) {
+            if (GridHelper.getDistrict(myData.getPosition()) != request.getDistrict()) {
+                Ack ack = Ack.newBuilder().setAck(true).build();
+                ackStreamObserver.onNext(ack);
+                ackStreamObserver.onCompleted();
+                return;
+            }
         }
 
         TaxiChargingRequest receivedRequest =
                 new TaxiChargingRequest(request.getTaxiId(), request.getTaxiPort(), request.getTimestamp());
 
-        // I'm charging the battery, enqueue the new request
-        if (myChargingData.isCharging)
-        {
-            myChargingData.chargingQueue.add(receivedRequest);
-            System.out.println("\nEnqueueing: " + receivedRequest);
-            return;
-        }
-
-        // I'm waiting to charge..
-        if (myChargingData.currentRechargeRequest != null)
-        {
-            // My request has the priority wrt the received one (Smaller timestamp)
-            if (myChargingData.currentRechargeRequest.compareTo(receivedRequest) > 0)
-            {
-                // Enqueue
-                myChargingData.chargingQueue.add(receivedRequest);
-                System.out.println(myChargingData.chargingQueue);
-            } else {
-                // Say OK since you're request has a greater timestamp
+        // I'm not interested on battery recharging, say OK
+        synchronized (myChargingData) {
+            if (!myChargingData.isCharging && myChargingData.currentRechargeRequest == null) {
                 Ack ack = Ack.newBuilder().setAck(true).build();
                 ackStreamObserver.onNext(ack);
                 ackStreamObserver.onCompleted();
+            }
+
+            // I'm charging the battery, enqueue the new request
+            else if (myChargingData.isCharging) {
+                myChargingData.chargingQueue.add(receivedRequest);
+                System.out.println("\nEnqueueing: " + receivedRequest);
+            }
+
+            // I'm waiting to charge...
+            else if (myChargingData.currentRechargeRequest != null)
+            {
+                // My request has the priority wrt the received one (Smaller timestamp)
+                if (myChargingData.currentRechargeRequest.compareTo(receivedRequest) > 0)
+                {
+                    // Enqueue
+                    myChargingData.chargingQueue.add(receivedRequest);
+                    System.out.println("Enqueued: " + myChargingData.chargingQueue);
+                } else {
+                    // Say OK since you're request has a greater timestamp
+                    Ack ack = Ack.newBuilder().setAck(true).build();
+                    ackStreamObserver.onNext(ack);
+                    ackStreamObserver.onCompleted();
+                }
             }
         }
     }

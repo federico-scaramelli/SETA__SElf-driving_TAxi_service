@@ -34,31 +34,35 @@ public class TaxiInputThread extends Thread
                 break;
             } else if (Objects.equals(command, "recharge"))
             {
+                synchronized (myData.batteryLevel) {
+                    if (myData.getBatteryLevel() == 100) {
+                        System.out.println("Your battery is already charged.");
+                        continue;
+                    }
+                }
+
                 if (myChargingData.chargeCommandReceived) {
-                    System.out.println("Recharge already requested...");
+                    System.out.println("Recharge already requested.");
                     continue;
                 }
 
                 if (myChargingData.isCharging) {
-                    System.out.println("Recharge not available now. You're already recharging.");
+                    System.out.println("You're already recharging.");
                     continue;
                 }
 
                 if (myChargingData.currentRechargeRequest != null) {
-                    System.out.println("Recharge not available now. You're already enqueued for recharging.");
+                    System.out.println("You're already waiting for recharging.");
                     continue;
                 }
 
-                if (myRidesData.isRiding || myRidesData.currentRideRequest != null) {
-                    System.out.println("Recharge requested. Waiting for it...");
-                    myChargingData.chargeCommandReceived = true;
-                    continue;
-                }
-
-                if (myData.getBatteryLevel() == 100)
-                {
-                    System.out.println("Your battery is already charged.");
-                    continue;
+                synchronized (myRidesData) {
+                    if (myRidesData.isRiding
+                            || myRidesData.competitionState == TaxiRidesData.RideCompetitionState.Pending) {
+                        System.out.println("Recharge requested. Waiting for it...");
+                        myChargingData.chargeCommandReceived = true;
+                        continue;
+                    }
                 }
 
                 TaxiProcess.startChargingProcess();
