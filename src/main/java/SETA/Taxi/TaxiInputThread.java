@@ -1,5 +1,6 @@
 package SETA.Taxi;
 
+import java.awt.image.AreaAveragingScaleFilter;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Scanner;
@@ -28,7 +29,7 @@ public class TaxiInputThread extends Thread
             Scanner scan = new Scanner(System.in);
             String command = scan.nextLine();
 
-            if (Objects.equals(command, "quit")) {
+            if (Objects.equals(command, "quit") || Objects.equals(command, "q")) {
                 System.out.println("Waiting to quit...");
                 try {
                     Quit();
@@ -36,7 +37,7 @@ public class TaxiInputThread extends Thread
                     throw new RuntimeException(e);
                 }
                 break;
-            } else if (Objects.equals(command, "recharge"))
+            } else if (Objects.equals(command, "recharge") || Objects.equals(command, "r"))
             {
                 synchronized (myData.batteryLevel) {
                     if (myData.getBatteryLevel() == 100) {
@@ -97,10 +98,16 @@ public class TaxiInputThread extends Thread
         // Notify the other taxis
         taxiToNotify = new ArrayList<>();
         taxiToNotify.addAll(taxiList);
+        ArrayList<TaxiRpcNotifyQuitThread> threads = new ArrayList<>();
         for (TaxiData t : taxiToNotify)
         {
             TaxiRpcNotifyQuitThread notifyQuitThread = new TaxiRpcNotifyQuitThread(myData, t);
+            threads.add(notifyQuitThread);
             notifyQuitThread.start();
+        }
+        for (TaxiRpcNotifyQuitThread thread : threads)
+        {
+            thread.join(10000);
         }
 
         // Wait all the ACKs

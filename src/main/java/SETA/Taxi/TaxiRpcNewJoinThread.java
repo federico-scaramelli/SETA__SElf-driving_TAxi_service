@@ -8,15 +8,19 @@ import project.taxi.grpc.TaxiGrpc;
 import project.taxi.grpc.TaxiGrpc.*;
 import project.taxi.grpc.TaxiOuterClass;
 
+import java.util.concurrent.TimeUnit;
+
 // Thread to invoke an RPC on all the taxis on the network at the time of my entry
 public class TaxiRpcNewJoinThread extends Thread
 {
     TaxiData myData;
+    TaxiChargingData myChargingData;
     TaxiData otherTaxiServer;
 
-    public TaxiRpcNewJoinThread(TaxiData myData, TaxiData otherTaxiServer)
+    public TaxiRpcNewJoinThread(TaxiData myData, TaxiChargingData myChargingData, TaxiData otherTaxiServer)
     {
         this.myData = myData;
+        this.myChargingData = myChargingData;
         this.otherTaxiServer = otherTaxiServer;
     }
 
@@ -40,16 +44,23 @@ public class TaxiRpcNewJoinThread extends Thread
                         .build();
 
         // Call the notifyJoin method on the server of another taxi
-        stub.notifyJoin(info, new StreamObserver<TaxiOuterClass.Ack>() {
+        stub.withDeadlineAfter(5, TimeUnit.SECONDS)
+            .notifyJoin(info, new StreamObserver<TaxiOuterClass.Timestamp>() {
             @Override
-            public void onNext(TaxiOuterClass.Ack value) {
+            public void onNext(TaxiOuterClass.Timestamp value) {
                 System.out.println("ACK! From " + otherTaxiServer.getID() + " about [Taxi join]");
+                if (myChargingData.logicalClock < value.getTimestamp()) {
+                    myChargingData.logicalClock = value.getTimestamp() + 1;
+                    System.out.println("Initial logical clock value updated: " + myChargingData.logicalClock);
+                }
             }
 
             @Override
             public void onError(Throwable t) {
-                System.out.println("ERROR! " + t.getCause());
+                TaxiProcess.removeTaxiFromList(otherTaxiServer);
+                System.out.println("ERROR! New Join RPC Thread! " + t.getCause());
                 t.printStackTrace();
+                channel.shutdownNow();
             }
 
             @Override

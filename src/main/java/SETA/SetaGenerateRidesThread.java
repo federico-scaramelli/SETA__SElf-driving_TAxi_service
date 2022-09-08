@@ -14,7 +14,7 @@ public class SetaGenerateRidesThread extends Thread
                 RideRequest request = new RideRequest();
                 // Avoid conflicts
                 synchronized (Seta.completedRides) {
-                    while (Seta.completedRides.contains(request)        // Already dispatched
+                    while (Seta.completedRides.contains(request.ID)        // Already dispatched
                             || rideQueues.get(0).contains(request)      // Already generated
                             || rideQueues.get(1).contains(request)
                             || rideQueues.get(2).contains(request)
@@ -25,11 +25,13 @@ public class SetaGenerateRidesThread extends Thread
                 }
 
                 int district = GridHelper.getDistrict(request.startingPos);
+                int district2 = GridHelper.getDistrict(request.destinationPos);
 
                 // ====================================================================== debug
-                /*while (district != 1) {
+                /*while (district != 1 || district2 != 1) {
                     request = new RideRequest();
                     district = GridHelper.getDistrict(request.startingPos);
+                    district2 = GridHelper.getDistrict(request.destinationPos);
                 }*/
                 // ====================================================================== debug
 

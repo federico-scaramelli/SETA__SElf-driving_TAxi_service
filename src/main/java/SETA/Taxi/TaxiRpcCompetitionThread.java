@@ -43,6 +43,7 @@ public class TaxiRpcCompetitionThread extends Thread
                 .setRideDistrict(GridHelper.getDistrict(request.startingPos))
                 .setBattery(myData.getBatteryLevel())
                 .setDistance(GridHelper.getDistance(myData.getPosition(), request.startingPos))
+                .setStartPos(Position.newBuilder().setX(request.startingPos.x).setY(request.startingPos.y).build())
                 .build();
 
         // Call the competeForRide method on the server of another taxi

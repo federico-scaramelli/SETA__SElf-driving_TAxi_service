@@ -35,6 +35,7 @@ message CompeteRequestData
     int32 taxiId        = 3;
     double distance     = 4;
     double battery      = 5;
+    Position startPos   = 6;
 }
 
 message RideRequest
@@ -67,9 +68,14 @@ message ChargingReply
     int32 taxiId    = 1;
 }
 
+message Timestamp
+{
+    int32 timestamp = 1;
+}
+
 service Taxi
 {
-    rpc notifyJoin (StartingTaxiInfo) returns (Ack);
+    rpc notifyJoin (StartingTaxiInfo) returns (Timestamp);
     rpc notifyQuit (QuitNotification) returns (Null);
     rpc competeForRide (CompeteRequestData) returns (InterestedToCompetition);
     rpc confirmRideTaken (RideId) returns (Ack);

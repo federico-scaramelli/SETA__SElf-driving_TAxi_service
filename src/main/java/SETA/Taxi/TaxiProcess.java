@@ -107,13 +107,19 @@ public class TaxiProcess
         rpcThread.start();
 
         // Start RPC Client threads to send your data to all the taxis received from the server
+        ArrayList<TaxiRpcNewJoinThread> threads = new ArrayList<>();
         for (TaxiData t : taxiList)
         {
             if (t.getID() != myData.getID()) {
-                TaxiRpcNewJoinThread rpcClient = new TaxiRpcNewJoinThread(myData, t);
-                rpcClient.start();
+                TaxiRpcNewJoinThread newJoinThread = new TaxiRpcNewJoinThread(myData, myChargingData, t);
+                threads.add(newJoinThread);
+                newJoinThread.start();
             }
         }
+        for (TaxiRpcNewJoinThread thread : threads) {
+            thread.join();
+        }
+        System.out.println("All the taxis received the notification about your joining!");
         //endregion
 
         // === Input thread ===
@@ -155,7 +161,6 @@ public class TaxiProcess
     {
         synchronized (myRidesData)
         {
-            myRidesData.currentRideRequest = request;
             myRidesData.rideCompetitors.clear();
             myRidesData.rideCompetitors.addAll(taxiList);
             myRidesData.competitorsCounter = myRidesData.rideCompetitors.size();
@@ -197,9 +202,6 @@ public class TaxiProcess
         // === Thread to actually execute the ride ===
         myRidesData.taxiRideThread = new TaxiRideThread(myData, myRidesData, myChargingData, localStatistics, request);
         myRidesData.taxiRideThread.start();
-        synchronized (myRidesData.currentRideRequest) {
-            myRidesData.currentRideRequest = null;
-        }
     }
 
     public static void startChargingProcess()
@@ -236,5 +238,15 @@ public class TaxiProcess
                     new TaxiRpcRequestChargingThread(myData, myChargingData, taxi);
             chargingThread.start();
         }
+    }
+
+    public static void removeTaxiFromList(TaxiData taxi)
+    {
+        if (!taxiList.contains(taxi))
+        {
+            System.out.println("You tried to remove taxi " + taxi.ID + " but it's not in the list!");
+            return;
+        }
+        taxiList.remove(taxi);
     }
 }

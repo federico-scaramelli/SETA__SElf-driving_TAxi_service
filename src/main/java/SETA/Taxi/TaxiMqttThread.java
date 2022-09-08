@@ -73,14 +73,13 @@ public class TaxiMqttThread extends Thread
         synchronized (myRidesData)
         {
             if (myRidesData.competitionState == TaxiRidesData.RideCompetitionState.Pending) {
-                System.out.println("Request " + rideRequest + " ignored because " +
-                                    "I'm into a competition for the ride " + myRidesData.currentRideRequest);
+                System.out.println("Request " + rideRequest + " ignored because I'm into a competition.");
                 return;
             }
 
             if (myRidesData.isRiding || myRidesData.completedRides.contains(rideRequest.ID)) {
-                System.out.println("Request " + rideRequest + " ignored because " +
-                                    "I'm running or it has been already taken.");
+                /*System.out.println("Request " + rideRequest + " ignored because " +
+                                    "I'm running or it has been already taken.");*/
                 return;
             }
         }
@@ -89,7 +88,7 @@ public class TaxiMqttThread extends Thread
         {
             if (myData.isQuitting)
             {
-                System.out.println("Request " + rideRequest + " ignored because I'm quitting the Smart City.");
+                //System.out.println("Request " + rideRequest + " ignored because I'm quitting the Smart City.");
                 return;
             }
         }
@@ -98,7 +97,7 @@ public class TaxiMqttThread extends Thread
         {
             if (myChargingData.isCharging || myChargingData.chargeCommandReceived)
             {
-                System.out.println("Request " + rideRequest + " ignored because I'm charging or I have to do it.");
+                //System.out.println("Request " + rideRequest + " ignored because I'm charging or I have to do it.");
                 return;
             }
         }

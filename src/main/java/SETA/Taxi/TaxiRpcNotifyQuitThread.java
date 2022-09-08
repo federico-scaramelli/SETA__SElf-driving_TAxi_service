@@ -6,6 +6,8 @@ import io.grpc.stub.StreamObserver;
 import project.taxi.grpc.TaxiGrpc;
 import project.taxi.grpc.TaxiOuterClass;
 
+import java.util.concurrent.TimeUnit;
+
 
 public class TaxiRpcNotifyQuitThread extends Thread
 {
@@ -29,15 +31,19 @@ public class TaxiRpcNotifyQuitThread extends Thread
                 .setTaxiId(myData.getID())
                 .build();
 
-        stub.notifyQuit(quitNotification, new StreamObserver<TaxiOuterClass.Null>()
+        stub.withDeadlineAfter(10, TimeUnit.SECONDS)
+            .notifyQuit(quitNotification, new StreamObserver<TaxiOuterClass.Null>()
         {
             @Override
-            public void onNext(TaxiOuterClass.Null nullMsg) {}
+            public void onNext(TaxiOuterClass.Null nullMsg) {
+                System.out.println("QUITTING OK! From " + otherTaxiServer);
+            }
 
             @Override
             public void onError(Throwable t) {
-                System.out.println("ERROR! Notifying quitting: " + t.getCause());
-                t.printStackTrace();
+                System.out.println("ERROR! Notifying quitting: Taxi " + otherTaxiServer + " did not answer.");
+                TaxiInputThread.taxiToNotify.remove(otherTaxiServer);
+                channel.shutdownNow();
             }
 
             @Override

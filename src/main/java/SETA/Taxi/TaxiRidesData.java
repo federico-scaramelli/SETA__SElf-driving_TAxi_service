@@ -14,7 +14,6 @@ public class TaxiRidesData
 
     public volatile Boolean isRiding = false;
     public TaxiRideThread taxiRideThread = null;
-    public RideRequest currentRideRequest = null;
     RideCompetitionState competitionState = RideCompetitionState.Idle;
     public final ArrayList<Integer> completedRides = new ArrayList<>();
     public final ArrayList<TaxiData> rideCompetitors = new ArrayList<>();

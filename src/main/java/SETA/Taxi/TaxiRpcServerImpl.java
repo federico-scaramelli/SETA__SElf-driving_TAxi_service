@@ -28,7 +28,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
     }
 
     @Override
-    public void notifyJoin(StartingTaxiInfo startingInfo, StreamObserver<Ack> ackStreamObserver)
+    public void notifyJoin(StartingTaxiInfo startingInfo, StreamObserver<Timestamp> timestampStreamObserver)
     {
         // I'm passing also the address but for this project it's hard-coded as localhost, so I don't use it
         TaxiData newTaxi = new TaxiData(startingInfo.getId(), startingInfo.getPort());
@@ -43,15 +43,15 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
 
         System.out.println("\nRPC Server: Taxi " + startingInfo.getId() + " has joined the Smart City.");
 
-        Ack ack = Ack.newBuilder()
-                .setAck(true)
-                .build();
+        Timestamp timestamp = Timestamp.newBuilder()
+                                .setTimestamp(myChargingData.logicalClock)
+                                .build();
 
         System.out.println(myList);
 
         // Send the ACK to the client
-        ackStreamObserver.onNext(ack);
-        ackStreamObserver.onCompleted();
+        timestampStreamObserver.onNext(timestamp);
+        timestampStreamObserver.onCompleted();
     }
 
     @Override
@@ -129,50 +129,17 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
             }
         }
 
-
-        /*if (myRidesData.currentRideRequest == null)
+        // Competition on distance
+        GridCell startPos = new GridCell(requestData.getStartPos().getX(), requestData.getStartPos().getY());
+        if (GridHelper.getDistance(myData.getPosition(), startPos) > requestData.getDistance())
         {
-            System.out.println("RPC Server: Ride request " + requestData.getRideId() + " not-received from MQTT.\n" +
-                    "Waiting for it from MQTT.");
-
-            // Don't send any ACK. Other taxi will send again the request to compete!
-            return;
-        }
-        // If there is a difference between last received ride request from mqtt and the one received from RPC
-        if (myRidesData.currentRideRequest.ID != requestData.getRideId())
-        {
-            System.out.println("RPC Server [WARNING!]: Ride request " + requestData.getRideId() +
-                    " is different from the one received by MQTT.\n" +
-                    "I'm not interested to this request.");
+            System.out.println("I lost the competition for the ride " + requestData.getRideId() +
+                    "\nMy distance is " + GridHelper.getDistance(myData.getPosition(), startPos)
+                    + " while the distance of competitor is "
+                    + requestData.getDistance());
             sendInterest(false, ackStreamObserver);
+            myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Idle;
             return;
-        }*/
-
-        synchronized (myRidesData.currentRideRequest) {
-            // If the last received ride request from the broker is different from the one received via RPC, warning
-            if (myRidesData.currentRideRequest.ID != requestData.getRideId()) {
-                System.out.println("WARNING! The last request received from the broker is different from the one" +
-                        " of this request, thus " + requestData.getRideId() + ". " +
-                        "Answering true to block the ride to be taken. If the ride is never been accomplished, SETA" +
-                        " will send it again and I'll receive it, allowing the competition.");
-                sendInterest(true, ackStreamObserver);
-                myRidesData.currentRideRequest = null;
-                myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Idle;
-                return;
-            }
-
-            // Competition on distance
-            if (GridHelper.getDistance(myData.getPosition(),
-                    myRidesData.currentRideRequest.startingPos) > requestData.getDistance()) {
-                System.out.println("I lost the competition for the ride " + requestData.getRideId() +
-                        "\nMy distance is " + GridHelper.getDistance(myData.getPosition(),
-                        myRidesData.currentRideRequest.startingPos)
-                        + " while the distance of competitor is "
-                        + requestData.getDistance());
-                sendInterest(false, ackStreamObserver);
-                myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Idle;
-                return;
-            }
         }
 
         // Competition on battery and ID
