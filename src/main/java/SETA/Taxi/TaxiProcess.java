@@ -27,6 +27,7 @@ public class TaxiProcess
     private static final Gson serializer = new Gson();
     private static Client client = null;
     static TaxiMqttThread mqttThread;
+    static TaxiRpcServerThread rpcThread;
 
     // Network
     private static ArrayList<TaxiData> taxiList = null;
@@ -102,7 +103,7 @@ public class TaxiProcess
         // RPC Server
         Server rpcServer = ServerBuilder.forPort(myData.port)
                 .addService(new TaxiRpcServerImpl(myData, myRidesData, myChargingData, taxiList)).build();
-        TaxiRpcServerThread rpcThread = new TaxiRpcServerThread(rpcServer);
+        rpcThread = new TaxiRpcServerThread(rpcServer);
         rpcThread.start();
 
         // Start RPC Client threads to send your data to all the taxis received from the server
@@ -176,7 +177,7 @@ public class TaxiProcess
         synchronized (myRidesData) {
             // Add the ride to the completed rides list
             myRidesData.completedRides.add(request.ID);
-            myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Won;
+            myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Idle;
 
             //Notify all the taxis about the completed ride
             for (TaxiData otherTaxi : taxiList) {

@@ -25,4 +25,9 @@ public class TaxiRpcServerThread extends Thread
         }
     }
 
+    public void terminate()
+    {
+        rpcServer.shutdownNow();
+    }
+
 }

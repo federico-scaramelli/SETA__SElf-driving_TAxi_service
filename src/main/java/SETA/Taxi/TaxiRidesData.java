@@ -9,14 +9,13 @@ public class TaxiRidesData
     public enum RideCompetitionState
     {
         Pending,
-        Won,
-        Lose
+        Idle
     }
 
     public volatile Boolean isRiding = false;
     public TaxiRideThread taxiRideThread = null;
     public RideRequest currentRideRequest = null;
-    RideCompetitionState competitionState = RideCompetitionState.Lose;
+    RideCompetitionState competitionState = RideCompetitionState.Idle;
     public final ArrayList<Integer> completedRides = new ArrayList<>();
     public final ArrayList<TaxiData> rideCompetitors = new ArrayList<>();
     public Integer competitorsCounter = Integer.MAX_VALUE;

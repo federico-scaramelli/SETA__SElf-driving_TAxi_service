@@ -21,5 +21,5 @@ public class TaxiChargingData
     public final HashMap<Integer, TaxiData> chargingCompetitors = new HashMap<>();
     // Can be a simple array since we are not using it as FIFO
     public final PriorityQueue<TaxiChargingRequest> chargingQueue = new PriorityQueue<TaxiChargingRequest>();
-    public TaxiChargingRequest currentRechargeRequest = null;
+    public volatile TaxiChargingRequest currentRechargeRequest = null;
 }

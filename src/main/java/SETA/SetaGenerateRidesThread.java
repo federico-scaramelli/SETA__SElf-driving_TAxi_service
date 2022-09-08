@@ -9,8 +9,7 @@ public class SetaGenerateRidesThread extends Thread
     @Override
     public void run()
     {
-        int count = 4;
-        while (count > 0) {
+        while (Seta.debugCount > 0) {
             for (int i = 0; i < 2; i++) {
                 RideRequest request = new RideRequest();
                 // Avoid conflicts
@@ -48,7 +47,7 @@ public class SetaGenerateRidesThread extends Thread
             } catch (Exception e) {
             }
 
-            count--;
+            Seta.debugCount--;
         }
     }
 }

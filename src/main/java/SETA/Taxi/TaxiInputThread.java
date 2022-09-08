@@ -30,7 +30,11 @@ public class TaxiInputThread extends Thread
 
             if (Objects.equals(command, "quit")) {
                 System.out.println("Waiting to quit...");
-                Quit();
+                try {
+                    Quit();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
                 break;
             } else if (Objects.equals(command, "recharge"))
             {
@@ -74,15 +78,25 @@ public class TaxiInputThread extends Thread
         }
     }
 
-    private void Quit()
-    {
+    private void Quit() throws InterruptedException {
         synchronized (myData.isQuitting) {
             myData.isQuitting = true;
         }
 
+        // Wait until the ride is completed
+        while (myRidesData.isRiding) {}
+
+        System.out.println("QUITTING: I'm not riding.");
+
+        // Wait to terminate charging operations
+        while (myChargingData.isCharging || myChargingData.chargeCommandReceived
+                || myChargingData.currentRechargeRequest != null) {}
+
+        System.out.println("QUITTING: I'm not charging.");
+
+        // Notify the other taxis
         taxiToNotify = new ArrayList<>();
         taxiToNotify.addAll(taxiList);
-
         for (TaxiData t : taxiToNotify)
         {
             TaxiRpcNotifyQuitThread notifyQuitThread = new TaxiRpcNotifyQuitThread(myData, t);
@@ -91,12 +105,12 @@ public class TaxiInputThread extends Thread
 
         // Wait all the ACKs
         while (!taxiToNotify.isEmpty()) {  }
-        System.out.println("DAJE!");
+        System.out.println("All the ACK received about my quitting.");
 
-        while (myRidesData.isRiding) {}
+        // Close the RPC server
+        TaxiProcess.rpcThread.terminate();
+        TaxiProcess.rpcThread.join();
 
-        while (myChargingData.isCharging) {}
-
-        System.out.println("ADIOS!");
+        System.out.println("Leaving the city. Bye bye!");
     }
 }

@@ -19,7 +19,7 @@ public class AddTaxiResponse
         taxiList = new ArrayList<TaxiData>(SmartCityManager.getInstance().getTaxiList());
         int startingDistrict = new Random().nextInt(4) + 1;
 
-        startingDistrict = 1;
+        //startingDistrict = 1;
 
         startingPosition = GridHelper.getRechargeStation(startingDistrict);
         //System.out.println(startingPosition);

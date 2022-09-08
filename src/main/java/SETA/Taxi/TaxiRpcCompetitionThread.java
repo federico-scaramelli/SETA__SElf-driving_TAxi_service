@@ -73,7 +73,14 @@ public class TaxiRpcCompetitionThread extends Thread
                         myRidesData.competitorsCounter--;
                     }
                 } else {
+                    System.out.println("ERROR! RPC Competition.");
+                    synchronized (myRidesData)
+                    {
+                        myRidesData.rideCompetitors.remove(otherTaxiServer);
+                        myRidesData.competitorsCounter--;
+                    }
                     System.out.println(t.getCause());
+                    t.printStackTrace();
                 }
             }
 
@@ -85,6 +92,7 @@ public class TaxiRpcCompetitionThread extends Thread
                 synchronized (myData.isQuitting) {
                     if (myData.isQuitting) {
                         System.out.println("Dropping the competition since I'm quitting.");
+                        myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Idle;
                         return;
                     }
                 }
@@ -93,11 +101,13 @@ public class TaxiRpcCompetitionThread extends Thread
                 {
                     if (myChargingData.currentRechargeRequest != null) {
                         System.out.println("I'm waiting to recharge. Dropping the competition.");
+                        myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Idle;
                         return;
                     }
 
                     if (myChargingData.chargeCommandReceived) {
                         System.out.println("Explicit request to recharge received. Dropping the competition.");
+                        myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Idle;
                         TaxiProcess.startChargingProcess();
                         return;
                     }

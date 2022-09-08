@@ -7,6 +7,8 @@ import io.grpc.stub.StreamObserver;
 import project.taxi.grpc.TaxiGrpc;
 import project.taxi.grpc.TaxiOuterClass.*;
 
+import java.util.concurrent.TimeUnit;
+
 public class TaxiRpcRequestChargingThread extends Thread
 {
     final TaxiData myData;
@@ -48,8 +50,8 @@ public class TaxiRpcRequestChargingThread extends Thread
 
             @Override
             public void onError(Throwable t) {
-                System.out.println(t.getCause());
-                t.printStackTrace();
+                // The error is raised because I don't send any answer in the case the receiver win the charging request
+                //System.out.println("ERROR! on RPC Request Charging.");
                 channel.shutdownNow();
             }
 
@@ -67,7 +69,7 @@ public class TaxiRpcRequestChargingThread extends Thread
                         myChargingData.isCharging = true;
 
 
-                        try { Thread.sleep(10000); } catch (Exception e) {}
+                        //try { Thread.sleep(10000); } catch (Exception e) {}
 
 
                         TaxiChargeThread chargeThread = new TaxiChargeThread(myData, myChargingData);
