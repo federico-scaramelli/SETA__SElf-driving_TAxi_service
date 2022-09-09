@@ -2,12 +2,20 @@ package SETA.Taxi;
 
 import Utils.GridHelper;
 import SETA.RideRequest;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientHandlerException;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import project.taxi.grpc.TaxiGrpc;
 import project.taxi.grpc.TaxiOuterClass.*;
+
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 public class TaxiRpcCompetitionThread extends Thread
@@ -75,11 +83,14 @@ public class TaxiRpcCompetitionThread extends Thread
                     }
                 } else {
                     System.out.println("ERROR! RPC Competition.");
-                    synchronized (myRidesData)
-                    {
-                        myRidesData.rideCompetitors.remove(otherTaxiServer);
-                        myRidesData.competitorsCounter--;
-                    }
+                    // Error on the connection with some other taxi. Drop the competition to avoid errors.
+                    myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Idle;
+                    myRidesData.competitorsCounter = Integer.MAX_VALUE;
+                    myRidesData.rideCompetitors.clear();
+
+                    // Ask the REST server the updated taxi list
+                    TaxiProcess.updateTaxiListAskingRestServer();
+
                     System.out.println(t.getCause());
                     t.printStackTrace();
                 }
@@ -118,6 +129,9 @@ public class TaxiRpcCompetitionThread extends Thread
                     // I'm the winner since no competitors remained valid to take this request
                     if (myRidesData.competitorsCounter == 0)
                     {
+                        myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Idle;
+                        myRidesData.competitorsCounter = Integer.MAX_VALUE;
+
                         if (myRidesData.isRiding) return;
 
                         myRidesData.isRiding = true;

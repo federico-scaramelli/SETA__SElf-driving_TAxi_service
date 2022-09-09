@@ -42,14 +42,18 @@ public class TaxiRpcNotifyQuitThread extends Thread
             @Override
             public void onError(Throwable t) {
                 System.out.println("ERROR! Notifying quitting: Taxi " + otherTaxiServer + " did not answer.");
-                TaxiInputThread.taxiToNotify.remove(otherTaxiServer);
+                synchronized (TaxiInputThread.taxiToNotify) {
+                    TaxiInputThread.taxiToNotify.remove(otherTaxiServer);
+                }
                 channel.shutdownNow();
             }
 
             @Override
             public void onCompleted()
             {
-                TaxiInputThread.taxiToNotify.remove(otherTaxiServer);
+                synchronized (TaxiInputThread.taxiToNotify) {
+                    TaxiInputThread.taxiToNotify.remove(otherTaxiServer);
+                }
                 channel.shutdownNow();
             }
         });

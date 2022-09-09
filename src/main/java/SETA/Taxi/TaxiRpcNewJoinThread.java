@@ -44,7 +44,7 @@ public class TaxiRpcNewJoinThread extends Thread
                         .build();
 
         // Call the notifyJoin method on the server of another taxi
-        stub.withDeadlineAfter(5, TimeUnit.SECONDS)
+        stub.withDeadlineAfter(10, TimeUnit.SECONDS)
             .notifyJoin(info, new StreamObserver<TaxiOuterClass.Timestamp>() {
             @Override
             public void onNext(TaxiOuterClass.Timestamp value) {
@@ -59,7 +59,6 @@ public class TaxiRpcNewJoinThread extends Thread
             public void onError(Throwable t) {
                 TaxiProcess.removeTaxiFromList(otherTaxiServer);
                 System.out.println("ERROR! New Join RPC Thread! " + t.getCause());
-                t.printStackTrace();
                 channel.shutdownNow();
             }
 

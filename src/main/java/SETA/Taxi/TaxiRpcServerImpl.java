@@ -47,7 +47,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
                                 .setTimestamp(myChargingData.logicalClock)
                                 .build();
 
-        System.out.println(myList);
+        //System.out.println(myList);
 
         // Send the ACK to the client
         timestampStreamObserver.onNext(timestamp);

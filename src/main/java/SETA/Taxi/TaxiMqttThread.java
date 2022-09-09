@@ -68,7 +68,7 @@ public class TaxiMqttThread extends Thread
 
     private void handleRideRequestReceiving(RideRequest rideRequest)
     {
-        System.out.println("\nReceived from MQTT broker: " + rideRequest);
+        //System.out.println("\nReceived from MQTT broker: " + rideRequest);
 
         synchronized (myRidesData)
         {

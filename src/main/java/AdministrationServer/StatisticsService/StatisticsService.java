@@ -75,5 +75,12 @@ public class StatisticsService
         return Response.ok().build();
     }
 
-
+    @Path("add/completedRide")
+    @POST
+    @Consumes( {"application/json"} )
+    public Response addCompletedRide (Integer rideId)
+    {
+        SmartCityManager.getInstance().addCompletedRide(rideId);
+        return Response.ok().build();
+    }
 }

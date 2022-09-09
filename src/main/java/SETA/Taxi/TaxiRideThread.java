@@ -13,6 +13,7 @@ public class TaxiRideThread extends Thread
 {
     public static final String updateTaxiDataPath = "taxi/update";
     public static final String sendLocalStatsPath = "statistics/add";
+    public static final String addCompletedRidePath = "statistics/add/completedRide";
 
     private final Gson serializer = new Gson();
     Client client = Client.create();
@@ -69,6 +70,9 @@ public class TaxiRideThread extends Thread
             myRidesData.isRiding = false;
         }
 
+        // Send the completed ride to the rest server
+        sendCompletedRideToRestServer();
+
         // If I received the recharge command, recharge
         synchronized (myChargingData) {
             if (myChargingData.chargeCommandReceived) {
@@ -91,6 +95,24 @@ public class TaxiRideThread extends Thread
             if (myData.getBatteryLevel() < 30) {
                 TaxiProcess.startChargingProcess();
             }
+        }
+    }
+
+    private void sendCompletedRideToRestServer()
+    {
+        String serializedStats = serializer.toJson(rideToExecute.ID);
+        WebResource webResource = client.resource(TaxiProcess.adminServerAddress + addCompletedRidePath);
+        ClientResponse clientResponse = webResource
+                .accept("application/json")
+                .type("application/json")
+                .post(ClientResponse.class, serializedStats);
+
+        if (clientResponse.getStatus() != 200)
+        {
+            throw new RuntimeException("Failed to add the local stats to the network.\n" +
+                    "HTTP Server response:\n" +
+                    "--> Error code: " + clientResponse.getStatus() + "\n" +
+                    "--> Info: " + clientResponse.getStatusInfo());
         }
     }
 

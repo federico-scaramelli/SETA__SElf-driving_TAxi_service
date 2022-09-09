@@ -1,7 +1,4 @@
 package AdministrationServer;
-
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,13 +6,12 @@ import java.util.Optional;
 
 import SETA.Taxi.TaxiData;
 
-@XmlRootElement
 public class SmartCityManager
 {
     private static SmartCityManager instance;
 
-    @XmlElement (name = "taxi_list")
     private final HashMap<Integer, TaxiData> taxiList;
+    private final ArrayList<Integer> completedRides = new ArrayList<>();
 
     private SmartCityManager()
     {
@@ -87,5 +83,14 @@ public class SmartCityManager
             System.out.println("Taxi not present on the Smart City.\n");
             return false;
         }
+    }
+
+    public void addCompletedRide(Integer rideId) {
+        completedRides.add(rideId);
+    }
+
+    public ArrayList<Integer> getCompletedRides()
+    {
+        return new ArrayList<Integer>(completedRides);
     }
 }

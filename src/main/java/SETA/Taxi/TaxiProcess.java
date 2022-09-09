@@ -7,7 +7,9 @@ import SensorPackage.PM10ReaderThread;
 import SensorPackage.PM10Simulator;
 import Utils.GridHelper;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import io.grpc.Server;
@@ -24,6 +26,8 @@ public class TaxiProcess
     public static final String adminServerAddress = "http://localhost:9797/";
     private static final String addTaxiPath = "taxi/add";
     private static final String removeTaxiPath = "taxi/remove";
+    private static final String getTaxiListPath = "statistics/get/taxi_list";
+
     private static final Gson serializer = new Gson();
     private static Client client = null;
     static TaxiMqttThread mqttThread;
@@ -73,6 +77,7 @@ public class TaxiProcess
             // Nobody can access myData at this point of the execution so synchronization is not needed
             myData.setPosition(addTaxiResponse.getStartingPosition());
             taxiList = addTaxiResponse.getTaxiList();
+            myRidesData.completedRides.addAll(addTaxiResponse.getCompletedRides());
 
             System.out.println("Successfully connected to the Smart City.\n");
             System.out.println("Response received from the server:\n" + addTaxiResponse.toString());
@@ -182,7 +187,6 @@ public class TaxiProcess
         synchronized (myRidesData) {
             // Add the ride to the completed rides list
             myRidesData.completedRides.add(request.ID);
-            myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Idle;
 
             //Notify all the taxis about the completed ride
             for (TaxiData otherTaxi : taxiList) {
@@ -242,11 +246,43 @@ public class TaxiProcess
 
     public static void removeTaxiFromList(TaxiData taxi)
     {
-        if (!taxiList.contains(taxi))
-        {
-            System.out.println("You tried to remove taxi " + taxi.ID + " but it's not in the list!");
-            return;
+        synchronized (taxiList) {
+            if (!taxiList.contains(taxi)) {
+                System.out.println("You tried to remove taxi " + taxi.ID + " but it's not in the list!");
+                return;
+            }
+            taxiList.remove(taxi);
         }
-        taxiList.remove(taxi);
+    }
+
+    public static void updateTaxiListAskingRestServer()
+    {
+        try {
+            WebResource webResource = client.resource(adminServerAddress + getTaxiListPath);
+            ClientResponse clientResponse = webResource.get(ClientResponse.class);
+
+            if (clientResponse.getStatus() != 200)
+            {
+                System.out.println("Failed to get the taxi list from the server.\n" +
+                        "HTTP Server response:\n" +
+                        "--> Error code: " + clientResponse.getStatus() + "\n" +
+                        "--> Info: " + clientResponse.getStatusInfo());
+            }
+            ArrayList<TaxiData> newList = serializer.fromJson(
+                    clientResponse.getEntity(String.class),
+                    new TypeToken<ArrayList<TaxiData>>(){}.getType());
+
+            synchronized (taxiList) {
+                taxiList.clear();
+                taxiList.addAll(newList);
+            }
+
+            System.out.println("Taxi list updated asking the REST server.");
+
+        } catch (ClientHandlerException e) {
+            System.out.println("Server error: " + e);
+            e.getCause();
+            e.printStackTrace();
+        }
     }
 }

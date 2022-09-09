@@ -107,7 +107,7 @@ public class TaxiInputThread extends Thread
         }
         for (TaxiRpcNotifyQuitThread thread : threads)
         {
-            thread.join(10000);
+            thread.join();
         }
 
         // Wait all the ACKs
