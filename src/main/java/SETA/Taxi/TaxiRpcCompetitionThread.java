@@ -69,6 +69,8 @@ public class TaxiRpcCompetitionThread extends Thread
                         // If the other taxi answered with negative interest, delete him from competitors
                         myRidesData.competitorsCounter--;
                     }
+                } else {
+                    dropCompetition();
                 }
             }
 
@@ -84,9 +86,7 @@ public class TaxiRpcCompetitionThread extends Thread
                 } else {
                     System.out.println("ERROR! RPC Competition.");
                     // Error on the connection with some other taxi. Drop the competition to avoid errors.
-                    myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Idle;
-                    myRidesData.competitorsCounter = Integer.MAX_VALUE;
-                    myRidesData.rideCompetitors.clear();
+                    dropCompetition();
 
                     // Ask the REST server the updated taxi list
                     TaxiProcess.updateTaxiListAskingRestServer();
@@ -104,7 +104,7 @@ public class TaxiRpcCompetitionThread extends Thread
                 synchronized (myData.isQuitting) {
                     if (myData.isQuitting) {
                         System.out.println("Dropping the competition since I'm quitting.");
-                        myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Idle;
+                        dropCompetition();
                         return;
                     }
                 }
@@ -113,13 +113,13 @@ public class TaxiRpcCompetitionThread extends Thread
                 {
                     if (myChargingData.currentRechargeRequest != null) {
                         System.out.println("I'm waiting to recharge. Dropping the competition.");
-                        myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Idle;
+                        dropCompetition();
                         return;
                     }
 
                     if (myChargingData.chargeCommandReceived) {
                         System.out.println("Explicit request to recharge received. Dropping the competition.");
-                        myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Idle;
+                        dropCompetition();
                         TaxiProcess.startChargingProcess();
                         return;
                     }
@@ -129,20 +129,31 @@ public class TaxiRpcCompetitionThread extends Thread
                     // I'm the winner since no competitors remained valid to take this request
                     if (myRidesData.competitorsCounter == 0)
                     {
-                        myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Idle;
-                        myRidesData.competitorsCounter = Integer.MAX_VALUE;
-
                         if (myRidesData.isRiding) return;
 
-                        myRidesData.isRiding = true;
+                        /*System.out.println("I won but wait..........");
+                        try { Thread.sleep(10000); } catch (Exception e) {}*/
+
+
                         try {
                             TaxiProcess.takeRide(request);
                         } catch (MqttException e) {
                             throw new RuntimeException(e);
                         }
+
+                        dropCompetition();
                     }
                 }
             }
         });
+    }
+
+    private void dropCompetition()
+    {
+        synchronized (myRidesData) {
+            myRidesData.rideCompetitors.clear();
+            myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Idle;
+            myRidesData.competitorsCounter = Integer.MAX_VALUE;
+        }
     }
 }

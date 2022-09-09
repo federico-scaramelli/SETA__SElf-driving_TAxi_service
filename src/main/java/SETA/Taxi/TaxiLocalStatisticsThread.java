@@ -36,6 +36,7 @@ public class TaxiLocalStatisticsThread extends Thread
                     }catch(Exception e){
                         e.printStackTrace();
                     }*/
+                    //System.out.println("STATISTICS READY TO BE SENT: " + originalStats);
                     originalStats.resetData();
                 }
 

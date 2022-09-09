@@ -129,7 +129,6 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
             }
         }
 
-        // Competition on distance
         GridCell startPos = new GridCell(requestData.getStartPos().getX(), requestData.getStartPos().getY());
         if (GridHelper.getDistance(myData.getPosition(), startPos) > requestData.getDistance())
         {
@@ -142,11 +141,12 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
             return;
         }
 
-        // Competition on battery and ID
         // The battery level can not change while a competition is in act, sync not needed
-        if (myData.getBatteryLevel() < requestData.getBattery()
-                || (myData.getBatteryLevel() == requestData.getBattery()
-                && myData.getID() < requestData.getTaxiId()))
+        if (GridHelper.getDistance(myData.getPosition(), startPos) == requestData.getDistance() &&
+                (myData.getBatteryLevel() < requestData.getBattery()
+                ||
+                    (myData.getBatteryLevel() == requestData.getBattery()
+                            && myData.getID() < requestData.getTaxiId())))
         {
             System.out.println("I lost the competition for the ride " + requestData.getRideId());
             sendInterest(false, ackStreamObserver);

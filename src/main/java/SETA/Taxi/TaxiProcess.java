@@ -196,6 +196,8 @@ public class TaxiProcess
                 TaxiRpcConfirmRideThread confirmationThread = new TaxiRpcConfirmRideThread(otherTaxi, request);
                 confirmationThread.start();
             }
+
+            myRidesData.isRiding = true;
         }
 
         startRide(request);

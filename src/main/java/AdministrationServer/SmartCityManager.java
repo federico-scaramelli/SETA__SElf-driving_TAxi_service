@@ -85,7 +85,11 @@ public class SmartCityManager
         }
     }
 
-    public void addCompletedRide(Integer rideId) {
+    public synchronized void addCompletedRide(Integer rideId) {
+        if (completedRides.contains(rideId)) {
+            System.out.println("ERROR! Received double completed ride! Ride " + rideId);
+            throw new RuntimeException();
+        }
         completedRides.add(rideId);
     }
 

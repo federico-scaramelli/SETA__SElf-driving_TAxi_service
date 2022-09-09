@@ -20,7 +20,7 @@ public class Seta
     static final ArrayList<Integer> completedRides = new ArrayList<>();
 
 
-    static int debugCount = 40;
+    static int debugCount = 50;
 
     public static void main(String[] argv) throws IOException, MqttException
     {
