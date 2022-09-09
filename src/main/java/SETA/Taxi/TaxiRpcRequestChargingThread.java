@@ -58,10 +58,9 @@ public class TaxiRpcRequestChargingThread extends Thread
             @Override
             public void onCompleted()
             {
-                channel.shutdownNow();
-
                 // Received all the ACK! Take the recharge station!
-                synchronized (myChargingData.chargingCompetitors) {
+                synchronized (myChargingData.chargingCompetitors)
+                {
                     if (myChargingData.isCharging)
                         return;
 
@@ -76,6 +75,8 @@ public class TaxiRpcRequestChargingThread extends Thread
                         chargeThread.start();
                     }
                 }
+
+                channel.shutdownNow();
             }
         });
     }

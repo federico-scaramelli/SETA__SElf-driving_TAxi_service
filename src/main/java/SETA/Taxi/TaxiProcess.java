@@ -210,39 +210,42 @@ public class TaxiProcess
         myRidesData.taxiRideThread.start();
     }
 
-    public static void startChargingProcess()
+    public synchronized static void startChargingProcess()
     {
-        myChargingData.currentRechargeRequest =
-                new TaxiChargingRequest(myData.getID(), myData.getPort(), myChargingData.logicalClock);
-        System.out.println("\nRecharging process started...");
+        synchronized (myChargingData) {
+            myChargingData.currentRechargeRequest =
+                    new TaxiChargingRequest(myData.getID(), myData.getPort(), myChargingData.logicalClock);
+            System.out.println("\nRecharging process started...");
 
-        // Go to the charging station
-        GridCell stationCell = GridHelper.getRechargeStation(myData.getPosition());
-        double distance = GridHelper.getDistance(myData.getPosition(), stationCell);
-        myData.setPosition(stationCell);
-        myData.reduceBattery(distance);
-        System.out.println("Arrived at recharge station.");
+            // Go to the charging station
+            synchronized (myData) {
+                GridCell stationCell = GridHelper.getRechargeStation(myData.getPosition());
+                double distance = GridHelper.getDistance(myData.getPosition(), stationCell);
+                System.out.println("Going to the recharge station " +
+                        "[From " + myData.getPosition() + " to " + stationCell);
+                myData.setPosition(stationCell);
+                myData.reduceBattery(distance);
+                System.out.println("Arrived at the recharge station " + myData.getPosition());
+            }
 
-        // Update logical clock since you are sending a messages
-        synchronized (myChargingData.logicalClock) {
+
+            // Update logical clock since you are sending a messages
             myChargingData.logicalClock += myChargingData.logicalClockOffset;
-        }
-        System.out.println("Logical clock value: " + myChargingData.logicalClock);
+            System.out.println("Logical clock value: " + myChargingData.logicalClock);
 
-        // Broadcast request
-        synchronized (myChargingData.chargingCompetitors) {
+            // Broadcast request
             myChargingData.chargingCompetitors.clear();
             for (TaxiData t : taxiList) {
                 myChargingData.chargingCompetitors.put(t.ID, t);
             }
             myChargingData.chargingCompetitors.put(myData.getID(), myData);
-        }
 
-        for(HashMap.Entry<Integer, TaxiData> entry : myChargingData.chargingCompetitors.entrySet()) {
-            TaxiData taxi = entry.getValue();
-            TaxiRpcRequestChargingThread chargingThread =
-                    new TaxiRpcRequestChargingThread(myData, myChargingData, taxi);
-            chargingThread.start();
+            for (HashMap.Entry<Integer, TaxiData> entry : myChargingData.chargingCompetitors.entrySet()) {
+                TaxiData taxi = entry.getValue();
+                TaxiRpcRequestChargingThread chargingThread =
+                        new TaxiRpcRequestChargingThread(myData, myChargingData, taxi);
+                chargingThread.start();
+            }
         }
     }
 

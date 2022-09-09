@@ -84,7 +84,7 @@ public class TaxiRpcCompetitionThread extends Thread
                         myRidesData.competitorsCounter--;
                     }
                 } else {
-                    System.out.println("ERROR! RPC Competition.");
+                    System.out.println("WARNING! RPC Competition.");
                     // Error on the connection with some other taxi. Drop the competition to avoid errors.
                     dropCompetition();
 
@@ -92,7 +92,7 @@ public class TaxiRpcCompetitionThread extends Thread
                     TaxiProcess.updateTaxiListAskingRestServer();
 
                     System.out.println(t.getCause());
-                    t.printStackTrace();
+                    //t.printStackTrace();
                 }
             }
 

@@ -39,13 +39,13 @@ public class TaxiRideThread extends Thread
     {
         System.out.println("\nDriving thread started. Executing ride...");
         try {
-            Thread.sleep(10000);
+            Thread.sleep(5000);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         int myDistrict;
-        synchronized (myData.currentPosition) {
+        synchronized (myData) {
             myDistrict = GridHelper.getDistrict(myData.getPosition());
             myData.setPosition(rideToExecute.destinationPos);
         }
@@ -73,11 +73,17 @@ public class TaxiRideThread extends Thread
         // Send the completed ride to the rest server
         sendCompletedRideToRestServer();
 
-        // If I received the recharge command, recharge
-        synchronized (myChargingData) {
-            if (myChargingData.chargeCommandReceived) {
+        // If my battery is too low, recharge
+        synchronized (myData.batteryLevel) {
+            if (myData.getBatteryLevel() < 30) {
                 TaxiProcess.startChargingProcess();
-                return;
+            } else {
+                // If I received the recharge command, recharge
+                synchronized (myChargingData) {
+                    if (myChargingData.chargeCommandReceived) {
+                        TaxiProcess.startChargingProcess();
+                    }
+                }
             }
         }
 
@@ -86,16 +92,10 @@ public class TaxiRideThread extends Thread
             if (myData.isQuitting) {
                 // Send statistics to REST server
                 sendLocalStatsToRestServer();
-                return;
             }
         }
 
-        // If my battery is too low, recharge
-        synchronized (myData.batteryLevel) {
-            if (myData.getBatteryLevel() < 30) {
-                TaxiProcess.startChargingProcess();
-            }
-        }
+
     }
 
     private void sendCompletedRideToRestServer()

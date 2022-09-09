@@ -28,11 +28,11 @@ public class SetaGenerateRidesThread extends Thread
                 int district2 = GridHelper.getDistrict(request.destinationPos);
 
                 // ====================================================================== debug
-                while (district != 1 || district2 != 1) {
+                /*while (district != 1 || district2 != 1) {
                     request = new RideRequest();
                     district = GridHelper.getDistrict(request.startingPos);
                     district2 = GridHelper.getDistrict(request.destinationPos);
-                }
+                }*/
                 // ====================================================================== debug
 
                 synchronized (rideQueues.get(district - 1)) {

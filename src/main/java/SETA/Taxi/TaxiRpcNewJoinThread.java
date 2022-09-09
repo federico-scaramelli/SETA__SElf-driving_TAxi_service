@@ -59,6 +59,10 @@ public class TaxiRpcNewJoinThread extends Thread
             public void onError(Throwable t) {
                 TaxiProcess.removeTaxiFromList(otherTaxiServer);
                 System.out.println("ERROR! New Join RPC Thread! " + t.getCause());
+
+                // Ask the REST server the updated taxi list
+                TaxiProcess.updateTaxiListAskingRestServer();
+
                 channel.shutdownNow();
             }
 

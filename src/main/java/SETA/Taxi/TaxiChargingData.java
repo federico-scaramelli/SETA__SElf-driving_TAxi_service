@@ -8,7 +8,7 @@ public class TaxiChargingData
 {
     public volatile Boolean isCharging = false;
     public volatile Boolean chargeCommandReceived = false;
-    public final Integer logicalClockOffset = new Random().nextInt(100);
+    public final Integer logicalClockOffset = new Random().nextInt(100) + 1;
     public Integer logicalClock = 0;
     public final HashMap<Integer, TaxiData> chargingCompetitors = new HashMap<>();
     // Can be a simple array since we are not using it as FIFO

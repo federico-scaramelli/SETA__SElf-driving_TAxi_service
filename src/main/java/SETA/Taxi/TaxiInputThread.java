@@ -46,19 +46,21 @@ public class TaxiInputThread extends Thread
                     }
                 }
 
-                if (myChargingData.chargeCommandReceived) {
-                    System.out.println("Recharge already requested.");
-                    continue;
-                }
+                synchronized (myChargingData) {
+                    if (myChargingData.chargeCommandReceived) {
+                        System.out.println("Recharge already requested.");
+                        continue;
+                    }
 
-                if (myChargingData.isCharging) {
-                    System.out.println("You're already recharging.");
-                    continue;
-                }
+                    if (myChargingData.isCharging) {
+                        System.out.println("You're already recharging.");
+                        continue;
+                    }
 
-                if (myChargingData.currentRechargeRequest != null) {
-                    System.out.println("You're already waiting for recharging.");
-                    continue;
+                    if (myChargingData.currentRechargeRequest != null) {
+                        System.out.println("You're already waiting for recharging.");
+                        continue;
+                    }
                 }
 
                 synchronized (myRidesData) {

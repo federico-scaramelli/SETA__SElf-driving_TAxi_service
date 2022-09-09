@@ -17,8 +17,8 @@ public class GridHelper
             return -1;
 
         if (cell.getX() < 5 && cell.getY() < 5)     return 1;
-        if (cell.getX() >= 5 && cell.getY() < 5)    return 2;
-        if (cell.getX() < 5)                        return 3;
+        if (cell.getX() < 5 && cell.getY() >= 5)    return 2;
+        if (cell.getY() < 5)                        return 3;
         return 4;
     }
 
