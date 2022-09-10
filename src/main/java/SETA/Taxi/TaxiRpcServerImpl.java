@@ -227,7 +227,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         synchronized (myChargingData.logicalClock) {
             System.out.println("Logical clock value at receiving: " + myChargingData.logicalClock);
             if (myChargingData.logicalClock < request.getTimestamp()) {
-                // Increment logical clock value wrt to the received one since the received request has a grater timestamp
+                // Increment logical clock since the received request has a grater timestamp
                 myChargingData.logicalClock = request.getTimestamp() + 1;
             } else {
                 // Otherwise increment the clock with your offset since you received a message
@@ -237,7 +237,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         }
 
 
-        // Request from me, say OK
+        // Request from myself, say OK
         if (request.getTaxiId() == myData.getID())
         {
             Ack ack = Ack.newBuilder().setAck(true).build();
@@ -259,8 +259,8 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         TaxiChargingRequest receivedRequest =
                 new TaxiChargingRequest(request.getTaxiId(), request.getTaxiPort(), request.getTimestamp());
 
-        // I'm not interested on battery recharging, say OK
         synchronized (myChargingData) {
+            // I'm not interested on battery recharging, say OK
             if (!myChargingData.isCharging && myChargingData.currentRechargeRequest == null) {
                 Ack ack = Ack.newBuilder().setAck(true).build();
                 ackStreamObserver.onNext(ack);
@@ -287,12 +287,16 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
                     Ack ack = Ack.newBuilder().setAck(true).build();
                     ackStreamObserver.onNext(ack);
                     ackStreamObserver.onCompleted();
+
+                    // add the requesting taxi to the competitors as you have to wait for him to get the station
+                    myChargingData.chargingCompetitors.put(request.getTaxiId(),
+                            new TaxiData(request.getTaxiId(), request.getTaxiPort()));
                 }
             }
         }
     }
 
-    // RPC called from a taxi when it ends to charge and notify the queue (I am/was in the queue)
+    // RPC called from a taxi when it ends to charge and notifies its queue
     @Override
     public void replyCharging(ChargingReply reply, StreamObserver<Null> nullStreamObserver)
     {

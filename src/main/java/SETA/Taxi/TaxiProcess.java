@@ -105,11 +105,15 @@ public class TaxiProcess
 
         //region ======= RPC =======
         // RPC Server
-        Server rpcServer = ServerBuilder.forPort(myData.port)
-                .addService(new TaxiRpcServerImpl(myData, myRidesData, myChargingData, taxiList)).build();
-        rpcThread = new TaxiRpcServerThread(rpcServer);
-        rpcThread.start();
-
+        try {
+            Server rpcServer = ServerBuilder.forPort(myData.port)
+                    .addService(new TaxiRpcServerImpl(myData, myRidesData, myChargingData, taxiList)).build();
+            rpcThread = new TaxiRpcServerThread(rpcServer);
+            rpcThread.start();
+        } catch (Exception e) {
+            quitCity();
+            return;
+        }
         // Start RPC threads to send your data to all the taxis received from the server in the TaxiList
         ArrayList<TaxiRpcNewJoinThread> threads = new ArrayList<>();
         for (TaxiData t : taxiList)
@@ -142,6 +146,11 @@ public class TaxiProcess
         if (!myData.isQuitting) return;
 
         // === Request to remove the taxi from the Smart City ===
+        quitCity();
+    }
+
+    private static void quitCity()
+    {
         try {
             WebResource webResource = client.resource(adminServerAddress + removeTaxiPath + "/" + myData.ID);
             ClientResponse clientResponse = webResource.delete(ClientResponse.class);
