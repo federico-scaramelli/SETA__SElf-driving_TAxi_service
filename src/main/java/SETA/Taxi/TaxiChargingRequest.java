@@ -1,5 +1,6 @@
 package SETA.Taxi;
 
+// Class to represent a request to charge on a station
 public class TaxiChargingRequest implements Comparable<TaxiChargingRequest>
 {
     public int taxiId;

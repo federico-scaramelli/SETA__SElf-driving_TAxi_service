@@ -8,7 +8,7 @@ import project.taxi.grpc.TaxiOuterClass;
 
 import java.util.concurrent.TimeUnit;
 
-
+// Thread to notify another taxi about you are quitting
 public class TaxiRpcNotifyQuitThread extends Thread
 {
     TaxiData myData;

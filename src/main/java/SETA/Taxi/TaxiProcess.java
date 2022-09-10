@@ -15,7 +15,6 @@ import com.sun.jersey.api.client.WebResource;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import org.eclipse.paho.client.mqttv3.MqttException;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,29 +26,28 @@ public class TaxiProcess
     private static final String addTaxiPath = "taxi/add";
     private static final String removeTaxiPath = "taxi/remove";
     private static final String getTaxiListPath = "statistics/get/taxi_list";
-
     private static final Gson serializer = new Gson();
     private static Client client = null;
     static TaxiMqttThread mqttThread;
     static TaxiRpcServerThread rpcThread;
 
-    // Network
+    // Taxi Network
     private static ArrayList<TaxiData> taxiList = null;
 
     // Components
     private static TaxiData myData = new TaxiData();
     private static Statistics localStatistics = null;
 
-    // Rides data container - Used as lock to synchronize and to organize the data into subclasses
+    // Rides data container - Used as lock to synchronize and to organize data regarding rides
     private static final TaxiRidesData myRidesData = new TaxiRidesData();
 
-    // Charging data container - Used as lock to synchronize and to organize the data into subclasses
+    // Charging data container - Used as lock to synchronize and to organize data regarding charging operations
     private static final TaxiChargingData myChargingData = new TaxiChargingData();
 
 
-    public static void main(String[] argv) throws IOException, InterruptedException
+    public static void main(String[] argv) throws InterruptedException
     {
-        //region ======= REST CONNECTION AND ADDING REQUEST TO THE SERVER =======
+        //region ======= REST CONNECTION + JOIN REQUEST TO THE SERVER =======
 
         // REST Client to communicate with the administration server
         client = Client.create();
@@ -74,7 +72,8 @@ public class TaxiProcess
             AddTaxiResponse addTaxiResponse = serializer.fromJson(
                                                 clientResponse.getEntity(String.class),
                                                 AddTaxiResponse.class);
-            // Nobody can access myData at this point of the execution so synchronization is not needed
+
+            // Nobody can access these data at this point of the execution so synchronization is not needed
             myData.setPosition(addTaxiResponse.getStartingPosition());
             taxiList = addTaxiResponse.getTaxiList();
             myRidesData.completedRides.addAll(addTaxiResponse.getCompletedRides());
@@ -82,7 +81,7 @@ public class TaxiProcess
             System.out.println("Successfully connected to the Smart City.\n");
             System.out.println("Response received from the server:\n" + addTaxiResponse.toString());
             System.out.println("\nStarting data:\n" + myData.toString());
-            System.out.println("Logical Clock offset: " + myChargingData.logicalClockOffset);
+            System.out.println("My Logical Clock offset: " + myChargingData.logicalClockOffset);
 
         } catch (Exception e) {
             System.out.println(e.toString());
@@ -97,9 +96,9 @@ public class TaxiProcess
         PM10Simulator pm10SensorThread = new PM10Simulator(pm10BufferThread);
         PM10ReaderThread pm10ReaderThread = new PM10ReaderThread(localStatistics, pm10BufferThread);
         TaxiLocalStatisticsThread statisticsThread = new TaxiLocalStatisticsThread(localStatistics);
-        pm10SensorThread.start();
-        pm10ReaderThread.start();
-        statisticsThread.start();
+        pm10SensorThread.start(); // Producer
+        pm10ReaderThread.start(); // Consumer
+        statisticsThread.start(); // Sender
         //endregion
 
 
@@ -111,7 +110,7 @@ public class TaxiProcess
         rpcThread = new TaxiRpcServerThread(rpcServer);
         rpcThread.start();
 
-        // Start RPC Client threads to send your data to all the taxis received from the server
+        // Start RPC threads to send your data to all the taxis received from the server in the TaxiList
         ArrayList<TaxiRpcNewJoinThread> threads = new ArrayList<>();
         for (TaxiData t : taxiList)
         {
@@ -121,6 +120,7 @@ public class TaxiProcess
                 newJoinThread.start();
             }
         }
+        // Wait until all the taxis receive your joining notification
         for (TaxiRpcNewJoinThread thread : threads) {
             thread.join();
         }
@@ -128,18 +128,18 @@ public class TaxiProcess
         //endregion
 
         // === Input thread ===
-        TaxiInputThread quitThread = new TaxiInputThread(myData, myRidesData, myChargingData, taxiList);
-        quitThread.start();
-        System.out.println("\nInsert 'quit' to quit the Smart City.");
+        TaxiInputThread inputThread = new TaxiInputThread(myData, myRidesData, myChargingData, taxiList);
+        inputThread.start();
+        System.out.println("\nInsert 'quit' to quit the Smart City.\nInsert 'recharge' to request a recharge.");
 
-        //======= MQTT BROKER CONNECTION =======
+        // === MQTT BROKER CONNECTION ===
         mqttThread = new TaxiMqttThread(myData, myRidesData, myChargingData, localStatistics);
         mqttThread.start();
 
-        // Wait until the quit thread has done
-        quitThread.join();
+        // === Close operations ===
+        // Wait until the quit thread has finished
+        inputThread.join();
         if (!myData.isQuitting) return;
-        //while (!myData.exited) {}
 
         // === Request to remove the taxi from the Smart City ===
         try {
@@ -162,15 +162,19 @@ public class TaxiProcess
         }
     }
 
+    // Called to start a competition about a specific ride request.
     public synchronized static void joinCompetition(RideRequest request)
     {
         synchronized (myRidesData)
         {
+            // Competitors setup
             myRidesData.rideCompetitors.clear();
             myRidesData.rideCompetitors.addAll(taxiList);
             myRidesData.competitorsCounter = myRidesData.rideCompetitors.size();
+            // Competition state update - now I'm in a competition
             myRidesData.competitionState = TaxiRidesData.RideCompetitionState.Pending;
 
+            // Broadcast RPC to compete for the ride
             for (TaxiData t : myRidesData.rideCompetitors)
             {
                 TaxiRpcCompetitionThread competitionThread =
@@ -180,8 +184,10 @@ public class TaxiProcess
         }
     }
 
+    // Called to take a ride when all the positive ACK about a competition are received
     public static void takeRide(RideRequest request) throws MqttException
     {
+        // Notify SETA about this ride successfully taken
         mqttThread.notifySetaRequestTaken(request);
 
         synchronized (myRidesData) {
@@ -197,6 +203,7 @@ public class TaxiProcess
                 confirmationThread.start();
             }
 
+            // Now I'm riding.
             myRidesData.isRiding = true;
         }
 
@@ -210,9 +217,11 @@ public class TaxiProcess
         myRidesData.taxiRideThread.start();
     }
 
+    // Go to the recharge station and try to take it. If there is a queue, wait in the queue.
     public synchronized static void startChargingProcess()
     {
         synchronized (myChargingData) {
+            // Now I'm waiting for a recharge.
             myChargingData.currentRechargeRequest =
                     new TaxiChargingRequest(myData.getID(), myData.getPort(), myChargingData.logicalClock);
             System.out.println("\nRecharging process started...");
@@ -225,7 +234,7 @@ public class TaxiProcess
                         "[From " + myData.getPosition() + " to " + stationCell);
                 myData.setPosition(stationCell);
                 myData.reduceBattery(distance);
-                System.out.println("Arrived at the recharge station " + myData.getPosition());
+                System.out.println("Arrived at the recharge station in " + myData.getPosition());
             }
 
 
@@ -233,7 +242,7 @@ public class TaxiProcess
             myChargingData.logicalClock += myChargingData.logicalClockOffset;
             System.out.println("Logical clock value: " + myChargingData.logicalClock);
 
-            // Broadcast request
+            // Broadcast RPC request to take the recharge station
             myChargingData.chargingCompetitors.clear();
             for (TaxiData t : taxiList) {
                 myChargingData.chargingCompetitors.put(t.ID, t);
@@ -249,6 +258,7 @@ public class TaxiProcess
         }
     }
 
+    // Remove a taxi from the list
     public static void removeTaxiFromList(TaxiData taxi)
     {
         synchronized (taxiList) {
@@ -260,6 +270,8 @@ public class TaxiProcess
         }
     }
 
+    // Request an updated copy of the taxi list to the REST server.
+    // Called in the case a taxi not actually present in the network remains on the local list.
     public static void updateTaxiListAskingRestServer()
     {
         try {

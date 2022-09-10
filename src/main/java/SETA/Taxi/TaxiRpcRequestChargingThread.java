@@ -7,8 +7,7 @@ import io.grpc.stub.StreamObserver;
 import project.taxi.grpc.TaxiGrpc;
 import project.taxi.grpc.TaxiOuterClass.*;
 
-import java.util.concurrent.TimeUnit;
-
+// Thread to call an RPC to request a competition about a specific recharge station
 public class TaxiRpcRequestChargingThread extends Thread
 {
     final TaxiData myData;

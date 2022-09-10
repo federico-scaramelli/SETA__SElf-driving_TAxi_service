@@ -6,6 +6,7 @@ import SETA.Taxi.TaxiData;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 
+// REST service to add/update/remove a taxi on the server
 @Path("taxi")
 public class TaxiService
 {

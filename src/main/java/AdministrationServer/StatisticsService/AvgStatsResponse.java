@@ -2,6 +2,8 @@ package AdministrationServer.StatisticsService;
 
 import java.util.Objects;
 
+// Response returned from the REST service.
+// It contains an average of the data contained on the local statistics of the taxis
 public class AvgStatsResponse
 {
     public double traveledKm;

@@ -2,11 +2,11 @@ package AdministrationServer.StatisticsService;
 
 import AdministrationServer.SmartCityManager;
 import SETA.Taxi.TaxiData;
-
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 
+// REST service to get and set statistics
 @Path("statistics")
 public class StatisticsService
 {

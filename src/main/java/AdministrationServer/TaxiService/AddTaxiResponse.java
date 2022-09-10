@@ -8,6 +8,7 @@ import SETA.Taxi.TaxiData;
 import java.util.ArrayList;
 import java.util.Random;
 
+// Response returned by the REST server to the new joining taxis
 public class AddTaxiResponse
 {
     ArrayList<TaxiData> taxiList;
@@ -16,10 +17,13 @@ public class AddTaxiResponse
 
     public AddTaxiResponse()
     {
+        // Last updated taxiList
         taxiList = new ArrayList<TaxiData>(SmartCityManager.getInstance().getTaxiList());
 
+        // Last updated completed rides list
         completedRides = new ArrayList<>(SmartCityManager.getInstance().getCompletedRides());
 
+        // Random district computing
         int startingDistrict = new Random().nextInt(4) + 1;
         //startingDistrict = 1;
         startingPosition = GridHelper.getRechargeStation(startingDistrict);

@@ -4,6 +4,7 @@ import AdministrationServer.StatisticsService.Statistics;
 
 import java.util.List;
 
+// Consumer
 public class PM10ReaderThread extends Thread
 {
     PM10Buffer buffer;
@@ -19,6 +20,7 @@ public class PM10ReaderThread extends Thread
     {
         //System.out.println("Starting PM10 sensor buffer consumer...");
 
+        // Read continuously from the buffer with batches of size 8 (sliding window)
         while (true)
         {
             List<Measurement> list = buffer.readAllAndClean();

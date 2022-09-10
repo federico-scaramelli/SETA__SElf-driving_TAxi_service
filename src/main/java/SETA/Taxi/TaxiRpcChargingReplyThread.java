@@ -7,6 +7,7 @@ import io.grpc.stub.StreamObserver;
 import project.taxi.grpc.TaxiGrpc;
 import project.taxi.grpc.TaxiOuterClass;
 
+// Thread to send a reply about a recharge request to the enqueued taxis when you finished to charge
 public class TaxiRpcChargingReplyThread extends Thread
 {
     TaxiData myData;

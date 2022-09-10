@@ -1,5 +1,6 @@
 package SETA.Taxi;
 
+// Represents a position in the Smart City grid
 public class GridCell
 {
     public GridCell() {}

@@ -18,6 +18,7 @@ import project.taxi.grpc.TaxiOuterClass.*;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
+// Thread to handle a competition about a ride
 public class TaxiRpcCompetitionThread extends Thread
 {
     final TaxiData myData;
@@ -84,7 +85,9 @@ public class TaxiRpcCompetitionThread extends Thread
                         myRidesData.competitorsCounter--;
                     }
                 } else {
+                    // This handles the exception caused by a not updated list in which it's contained a quit taxi
                     System.out.println("WARNING! RPC Competition.");
+
                     // Error on the connection with some other taxi. Drop the competition to avoid errors.
                     dropCompetition();
 
@@ -133,7 +136,6 @@ public class TaxiRpcCompetitionThread extends Thread
 
                         /*System.out.println("I won but wait..........");
                         try { Thread.sleep(10000); } catch (Exception e) {}*/
-
 
                         try {
                             TaxiProcess.takeRide(request);

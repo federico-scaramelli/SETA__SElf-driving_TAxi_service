@@ -14,8 +14,8 @@ public class SetaGenerateRidesThread extends Thread
                 RideRequest request = new RideRequest();
                 // Avoid conflicts
                 synchronized (Seta.completedRides) {
-                    while (Seta.completedRides.contains(request.ID)        // Already dispatched
-                            || rideQueues.get(0).contains(request)      // Already generated
+                    while (Seta.completedRides.contains(request.ID)         // Already dispatched
+                            || rideQueues.get(0).contains(request)          // Already generated
                             || rideQueues.get(1).contains(request)
                             || rideQueues.get(2).contains(request)
                             || rideQueues.get(3).contains(request))
@@ -25,10 +25,10 @@ public class SetaGenerateRidesThread extends Thread
                 }
 
                 int district = GridHelper.getDistrict(request.startingPos);
-                int district2 = GridHelper.getDistrict(request.destinationPos);
 
                 // ====================================================================== debug
-                /*while (district != 1 || district2 != 1) {
+                /*int district2 = GridHelper.getDistrict(request.destinationPos);
+                while (district != 1 || district2 != 1) {
                     request = new RideRequest();
                     district = GridHelper.getDistrict(request.startingPos);
                     district2 = GridHelper.getDistrict(request.destinationPos);
@@ -39,7 +39,7 @@ public class SetaGenerateRidesThread extends Thread
                     System.out.println("--> Adding a request to the queue of district " + district);
                     rideQueues.get(district - 1).add(request);
 
-                    //System.out.println("--> Generator: notify!");
+                    // Notify the dispatcher!
                     rideQueues.get(district - 1).notify();
                 }
             }
@@ -49,6 +49,7 @@ public class SetaGenerateRidesThread extends Thread
             } catch (Exception e) {
             }
 
+            // Debug counter to generate a specific amount of requests and verify the final results
             Seta.debugCount--;
         }
     }

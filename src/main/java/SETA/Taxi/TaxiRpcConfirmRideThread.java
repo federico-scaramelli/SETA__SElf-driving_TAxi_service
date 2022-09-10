@@ -10,6 +10,7 @@ import project.taxi.grpc.TaxiOuterClass;
 
 import java.util.concurrent.TimeUnit;
 
+// Thread to notify a taxi about you took a ride request
 public class TaxiRpcConfirmRideThread extends Thread
 {
     TaxiData otherTaxiServer;

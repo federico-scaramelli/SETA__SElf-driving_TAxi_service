@@ -1,15 +1,15 @@
 package SETA.Taxi;
 
-import java.awt.image.AreaAveragingScaleFilter;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Scanner;
 
+// Thread to receive input on the taxi and handle the quitting process
 public class TaxiInputThread extends Thread
 {
     TaxiData myData;
-    TaxiRidesData myRidesData;
-    TaxiChargingData myChargingData;
+    final TaxiRidesData myRidesData;
+    final TaxiChargingData myChargingData;
     public static ArrayList<TaxiData> taxiList;
     public volatile static ArrayList<TaxiData> taxiToNotify;
 

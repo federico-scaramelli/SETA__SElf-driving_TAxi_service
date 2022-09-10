@@ -6,11 +6,15 @@ import java.util.Optional;
 
 import SETA.Taxi.TaxiData;
 
+// Maintain data about the Smart City on the REST server
 public class SmartCityManager
 {
+    // Singleton
     private static SmartCityManager instance;
 
+    // Hashmap for fast access by ID
     private final HashMap<Integer, TaxiData> taxiList;
+    // Completed rides list to be sent to the new taxis
     private final ArrayList<Integer> completedRides = new ArrayList<>();
 
     private SmartCityManager()
@@ -35,11 +39,13 @@ public class SmartCityManager
     {
         synchronized (taxiList)
         {
+            // Check for ID duplicates
             if (taxiList.containsKey(taxi.getID())) {
                 System.out.println("ID already present.\n");
                 return false;
             }
 
+            // Check for port duplicates
             // Filter hash map with port number
             Optional<Map.Entry<Integer, TaxiData>> matchedEntry =
                     taxiList.entrySet().stream().
@@ -57,6 +63,7 @@ public class SmartCityManager
         return true;
     }
 
+    // Update the data of a taxi on REST server side
     public boolean updateTaxi (TaxiData taxi)
     {
         synchronized (taxiList)
@@ -71,6 +78,7 @@ public class SmartCityManager
         return true;
     }
 
+    // Remove a taxi on REST server side if it exists
     public boolean removeTaxi(Integer id)
     {
         synchronized (taxiList)
@@ -85,6 +93,7 @@ public class SmartCityManager
         }
     }
 
+    // Add a completed ride to the list
     public synchronized void addCompletedRide(Integer rideId) {
         if (completedRides.contains(rideId)) {
             System.out.println("ERROR! Received double completed ride! Ride " + rideId);

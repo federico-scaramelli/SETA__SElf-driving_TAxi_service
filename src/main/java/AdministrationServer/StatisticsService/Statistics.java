@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+// Class to contain the local statistics of a taxi
 public class Statistics
 {
     public Statistics() {}

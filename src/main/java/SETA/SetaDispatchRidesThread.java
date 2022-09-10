@@ -45,6 +45,7 @@ public class SetaDispatchRidesThread extends Thread {
     {
         setupMqtt();
 
+        // Continuously look for new requests to dispatch
         while (true)
         {
             synchronized (rideQueue)
@@ -63,6 +64,7 @@ public class SetaDispatchRidesThread extends Thread {
                 System.out.println("--> Ride poll!");
                 dispatchedRide = rideQueue.poll();
 
+                // Repeat the requests until it's confirmed
                 timerTask = new TimerTask() {
                     @Override
                     public void run() {
@@ -117,6 +119,7 @@ public class SetaDispatchRidesThread extends Thread {
                     cause.printStackTrace();
                 }
 
+                // Receive confirmation messages
                 @Override
                 public void messageArrived(String topic, MqttMessage message)
                 {
@@ -140,15 +143,10 @@ public class SetaDispatchRidesThread extends Thread {
                         rideQueue.notify();
                     }
                     synchronized (Seta.completedRides) {
-                        if (completedRides.contains(request.ID))
-                        {
-                            System.out.println("!!!!!!!!!ERROR!!!!!!!!!! Received a double confirmation!");
-                            return;
-                        }
                         Seta.completedRides.add(request.ID);
 
                         //=================debug
-                        if (completedRides.size() >= debugCountTotal * 2){
+                        if (completedRides.size() >= debugCountTotal * 2) {
                             System.out.println("=================LISTS===============================================");
                             System.out.println("DISTRICT 1: " + rideQueues.get(0));
                             System.out.println("DISTRICT 2: " + rideQueues.get(1));
@@ -159,15 +157,15 @@ public class SetaDispatchRidesThread extends Thread {
                             System.out.println(completedRides);
 
                             System.out.println("=========================DUPLICATES======================");
-                            //Get frequencies of each element
+                            // Get frequencies of each element
                             Map<Integer, Long> frequencies = completedRides.stream()
                                     .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-
-                            //then filter only the inputs which have frequency greater than 1
+                            // then filter only the inputs which have frequency greater than 1
                             frequencies.entrySet().stream()
                                     .filter(entry -> entry.getValue() > 1)
                                     .forEach(entry -> System.out.println(entry.getKey()));
                         }
+                        //==========================
                     }
                 }
 

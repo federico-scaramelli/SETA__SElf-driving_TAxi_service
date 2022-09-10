@@ -4,6 +4,7 @@ import io.grpc.Server;
 
 import java.io.IOException;
 
+// RPC server
 public class TaxiRpcServerThread extends Thread
 {
     Server rpcServer;

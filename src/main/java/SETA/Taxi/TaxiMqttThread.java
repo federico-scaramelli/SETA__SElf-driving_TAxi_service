@@ -6,6 +6,8 @@ import SETA.RideRequest;
 import com.google.gson.Gson;
 import org.eclipse.paho.client.mqttv3.*;
 
+
+// Thread to handle the communication with the broker
 public class TaxiMqttThread extends Thread
 {
     private final String brokerAddress = "tcp://localhost:1883";
@@ -72,11 +74,13 @@ public class TaxiMqttThread extends Thread
 
         synchronized (myRidesData)
         {
+            // Ignore any requests if you are competing
             if (myRidesData.competitionState == TaxiRidesData.RideCompetitionState.Pending) {
                 System.out.println("Request " + rideRequest + " ignored because I'm into a competition.");
                 return;
             }
 
+            // Ignore any request if you are running or if the request has been already taken
             if (myRidesData.isRiding || myRidesData.completedRides.contains(rideRequest.ID)) {
                 /*System.out.println("Request " + rideRequest + " ignored because " +
                                     "I'm running or it has been already taken.");*/
@@ -86,6 +90,7 @@ public class TaxiMqttThread extends Thread
 
         synchronized (myData.isQuitting)
         {
+            // Ignore any request if you are quitting the city
             if (myData.isQuitting)
             {
                 //System.out.println("Request " + rideRequest + " ignored because I'm quitting the Smart City.");
@@ -95,6 +100,7 @@ public class TaxiMqttThread extends Thread
 
         synchronized (myChargingData)
         {
+            // Ignore any request if you are charging or you received the command to request a recharge
             if (myChargingData.isCharging || myChargingData.chargeCommandReceived)
             {
                 //System.out.println("Request " + rideRequest + " ignored because I'm charging or I have to do it.");
@@ -102,9 +108,11 @@ public class TaxiMqttThread extends Thread
             }
         }
 
+        // Otherwise join the competition about the received request
         TaxiProcess.joinCompetition(rideRequest);
     }
 
+    // Notify the broker about a request taken in charge by you
     public void notifySetaRequestTaken(RideRequest request) throws MqttException
     {
         String requestJson = serializer.toJson(request);
@@ -114,6 +122,7 @@ public class TaxiMqttThread extends Thread
         mqttClient.publish(topic + "/confirmations", message);
     }
 
+    // Chane the topic since the district is changed
     public static void changeTopic(int district) throws MqttException {
         mqttClient.unsubscribe(topic);
         System.out.println("Changing district to " + district);

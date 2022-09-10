@@ -9,6 +9,7 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.eclipse.paho.client.mqttv3.MqttException;
 
+// Thread to simulate a ride executed by a taxi
 public class TaxiRideThread extends Thread
 {
     public static final String updateTaxiDataPath = "taxi/update";
@@ -44,12 +45,12 @@ public class TaxiRideThread extends Thread
             e.printStackTrace();
         }
 
+        // Change district and topic if needed
         int myDistrict;
         synchronized (myData) {
             myDistrict = GridHelper.getDistrict(myData.getPosition());
             myData.setPosition(rideToExecute.destinationPos);
         }
-
         if (GridHelper.getDistrict(rideToExecute.destinationPos) != myDistrict) {
             // Change topic
             try {
@@ -60,7 +61,9 @@ public class TaxiRideThread extends Thread
             }
         }
 
+        // Update your local data
         updateLocalData();
+        // Send updated data to the server
         sendUpdateToRestServer();
 
         System.out.println("Arrived at destination " + rideToExecute.destinationPos + " with " +

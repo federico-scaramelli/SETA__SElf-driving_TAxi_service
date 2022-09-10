@@ -4,6 +4,7 @@ import com.sun.jersey.api.container.httpserver.HttpServerFactory;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 
+// REST server
 public class AdministrationServer
 {
     public final static String IP = "localhost";

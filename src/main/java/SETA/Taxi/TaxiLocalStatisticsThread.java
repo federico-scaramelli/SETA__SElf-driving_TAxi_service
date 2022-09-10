@@ -6,6 +6,8 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 
+
+// Thread to send local stats to the REST server
 public class TaxiLocalStatisticsThread extends Thread
 {
     public static final String sendLocalStatsPath = "statistics/add";
@@ -27,6 +29,7 @@ public class TaxiLocalStatisticsThread extends Thread
             try {
                 Thread.sleep(5000);
 
+                // Copy the stats to free the lock
                 synchronized (originalStats)
                 {
                     statsCopy = new Statistics(originalStats);

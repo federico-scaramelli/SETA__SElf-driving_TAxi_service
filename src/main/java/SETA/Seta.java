@@ -12,10 +12,9 @@ public class Seta
 {
     static final String brokerAddress = "tcp://localhost:1883";
     static final String topicBasePath = "seta/smartcity/rides/district";
-    static final int qos = 2;
-    static final Gson serializer = new Gson();
 
     static long timeout = 2000;
+    // Array of queues of ride requests, one for each district
     static ArrayList<LinkedList<RideRequest>> rideQueues = new ArrayList<LinkedList<RideRequest>>();
     static final ArrayList<Integer> completedRides = new ArrayList<>();
 
@@ -27,12 +26,12 @@ public class Seta
         for (int i = 0; i < 4; i++)
         {
             rideQueues.add(new LinkedList<RideRequest>());
-            // Dispatch rides and receive confirmations
+            // Thread to dispatch rides and receive confirmations. One for each district.
             SetaDispatchRidesThread dispatchRidesThread = new SetaDispatchRidesThread(rideQueues.get(i));
             dispatchRidesThread.start();
         }
 
-        // Generate two ride requests every 5 seconds
+        // Thread to generate two ride requests every 5 seconds
         SetaGenerateRidesThread generateRidesThread = new SetaGenerateRidesThread();
         generateRidesThread.start();
 

@@ -4,6 +4,7 @@ import SETA.Taxi.GridCell;
 
 import java.util.Random;
 
+// Static class to access utility methods to work on the grid
 public class GridHelper
 {
     public static double getDistance(GridCell a, GridCell b)

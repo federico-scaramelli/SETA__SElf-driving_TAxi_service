@@ -8,7 +8,6 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
-
 import java.text.DateFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -17,15 +16,16 @@ import java.util.*;
 
 public class AdministrationClient
 {
+    // Connection
     public static final String adminServerAddress = "http://localhost:9797/";
     public static final String getTaxiListPath = "statistics/get/taxi_list";
     public static final String queryStatisticsPath = "statistics/get/avg";
-
     private static final Gson serializer = new Gson();
+    static Client client = Client.create();
+
+    // I/O
     private static final DateTimeFormatter timeFormatter
                         = DateTimeFormatter.ISO_LOCAL_TIME;
-
-    static Client client = Client.create();
     static Scanner scan = new Scanner(System.in);
 
     public static void main(String[] argv)
@@ -34,6 +34,7 @@ public class AdministrationClient
         showMainMenu();
     }
 
+    // Main menu loop
     private static void showMainMenu() {
         System.out.println("\nSelect a query: ");
         System.out.println("1 - Taxi list");
@@ -70,6 +71,7 @@ public class AdministrationClient
         }
     }
 
+    // Takes the inputs to compute the average of the last N statistics registered by a specific taxi
     private static void showGetLastLocalAvgStatsMenu()
     {
         System.out.println("Select N: ");
@@ -79,6 +81,7 @@ public class AdministrationClient
         getLastLocalAvgStats(n, id);
     }
 
+    // Takes the inputs to compute the average of all the statistics registered in a period specified by the user
     private static void showGetGlobalAvgStatsMenu()
     {
         long t1 = 0;
@@ -115,6 +118,7 @@ public class AdministrationClient
         getGlobalAvgStats(t1, t2);
     }
 
+    // Print the taxi list received by the REST server
     public static void getTaxiList()
     {
         System.out.println("Taxi list requested...");
@@ -126,6 +130,7 @@ public class AdministrationClient
         }
     }
 
+    // Request the taxi list to the REST server
     public static ArrayList<TaxiData> getTaxiListRequest(Client client, String url)
     {
         try {
@@ -153,6 +158,7 @@ public class AdministrationClient
         }
     }
 
+    // Print the average of the last local statistics of a taxi received from the REST server
     public static void getLastLocalAvgStats(int n, int id)
     {
         System.out.println("Requested the average of the last " + n +
@@ -166,6 +172,7 @@ public class AdministrationClient
         }
     }
 
+    // Request the average of the last local statistics of a taxi to the REST server
     public static AvgStatsResponse getLastLocalAvgStatsRequest(Client client, String url)
     {
         try {
@@ -198,13 +205,14 @@ public class AdministrationClient
         }
     }
 
+    // Print the average of the global statistics received from the REST server
     public static void getGlobalAvgStats(long t1, long t2)
     {
         System.out.println("Requested the average of global statistics between " +
                             DateFormat.getTimeInstance().format(new Date(t1)) +
                             " and " + DateFormat.getTimeInstance().format(new Date(t2)));
-        AvgStatsResponse avgStats = getLastLocalAvgStatsRequest(client, adminServerAddress +
-                queryStatisticsPath + "/global_from_" + t1 + "_to_" + t2);
+        AvgStatsResponse avgStats = getGlobalAvgStatsRequest(client, adminServerAddress +
+                                                            queryStatisticsPath + "/global_from_" + t1 + "_to_" + t2);
         if (avgStats != null)
         {
             System.out.println("Response received from the server: ");
@@ -212,6 +220,7 @@ public class AdministrationClient
         }
     }
 
+    // Request the average of the global statistics registered in a period to the REST server
     public static AvgStatsResponse getGlobalAvgStatsRequest(Client client, String url)
     {
         try {

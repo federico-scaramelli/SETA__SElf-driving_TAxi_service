@@ -10,7 +10,7 @@ import project.taxi.grpc.TaxiOuterClass.*;
 import java.util.ArrayList;
 import java.util.Optional;
 
-// SERVER SIDE
+// RPC Server implementation
 public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
 {
     final TaxiData myData;
@@ -27,6 +27,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         this.myList = myList;
     }
 
+    // RPC to receive a join notification from a new taxi
     @Override
     public void notifyJoin(StartingTaxiInfo startingInfo, StreamObserver<Timestamp> timestampStreamObserver)
     {
@@ -49,11 +50,12 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
 
         //System.out.println(myList);
 
-        // Send the ACK to the client
+        // Send the timestamp
         timestampStreamObserver.onNext(timestamp);
         timestampStreamObserver.onCompleted();
     }
 
+    // RPC to compete with another taxi about a ride
     @Override
     public void competeForRide(CompeteRequestData requestData,
                                StreamObserver<InterestedToCompetition> ackStreamObserver)
@@ -159,6 +161,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         //try {Thread.sleep(7000);}catch (Exception e){}
     }
 
+    // Answer with your interest to a ride request
     private void sendInterest (boolean interest, StreamObserver<InterestedToCompetition> ackStreamObserver)
     {
         InterestedToCompetition ack = InterestedToCompetition.newBuilder()
@@ -168,6 +171,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         ackStreamObserver.onCompleted();
     }
 
+    // RPC to add a confirmed ride to the list
     @Override
     public void confirmRideTaken(RideId rideId, StreamObserver<Ack> ackStreamObserver)
     {
@@ -184,6 +188,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         ackStreamObserver.onCompleted();
     }
 
+    // RPC to receive notification about a taxi is quitting
     @Override
     public void notifyQuit(QuitNotification quitNotification, StreamObserver<Null> nullStreamObserver)
     {
@@ -214,6 +219,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         nullStreamObserver.onCompleted();
     }
 
+    // RPC to handle a request about a charging station
     @Override
     public void requestCharging(ChargingRequest request, StreamObserver<Ack> ackStreamObserver)
     {
@@ -286,6 +292,7 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
         }
     }
 
+    // RPC called from a taxi when it ends to charge and notify the queue (I am/was in the queue)
     @Override
     public void replyCharging(ChargingReply reply, StreamObserver<Null> nullStreamObserver)
     {

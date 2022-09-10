@@ -10,11 +10,11 @@ public class TaxiData
     // Taxi uses ID numbers from 1 to 1000
     public final int ID;
     public final String address = "localhost";
-    // Taxi uses ports from 9798 to 65535
+    // Taxi uses ports from 9798 to 65535 - 9797 is the REST server
     public final int port;
 
     // === Working data ===
-    public Double batteryLevel = Double.valueOf(100);
+    public Double batteryLevel = 100.0;
     public GridCell currentPosition;
 
     // Flag

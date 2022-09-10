@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.Random;
 
+// Class to contain all the data related to charging stuff.
 public class TaxiChargingData
 {
     public volatile Boolean isCharging = false;

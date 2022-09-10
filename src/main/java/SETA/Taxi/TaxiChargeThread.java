@@ -2,6 +2,7 @@ package SETA.Taxi;
 
 import java.util.ArrayList;
 
+// Thread to simulate che charging process of a taxi when it receives the station owning
 public class TaxiChargeThread extends Thread
 {
     final TaxiData myData;

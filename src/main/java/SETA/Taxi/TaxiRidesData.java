@@ -1,9 +1,7 @@
 package SETA.Taxi;
-
-import SETA.RideRequest;
-
 import java.util.ArrayList;
 
+// Class to contain all the data related to rides stuff.
 public class TaxiRidesData
 {
     public enum RideCompetitionState
