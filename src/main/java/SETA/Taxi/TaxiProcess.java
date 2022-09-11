@@ -258,12 +258,19 @@ public class TaxiProcess
             }
             myChargingData.chargingCompetitors.put(myData.getID(), myData);
 
+            ArrayList<TaxiRpcRequestChargingThread> threads = new ArrayList<>();
             for (HashMap.Entry<Integer, TaxiData> entry : myChargingData.chargingCompetitors.entrySet()) {
                 TaxiData taxi = entry.getValue();
                 TaxiRpcRequestChargingThread chargingThread =
                         new TaxiRpcRequestChargingThread(myData, myChargingData, taxi);
-                chargingThread.start();
+                threads.add(chargingThread);
             }
+
+            for (TaxiRpcRequestChargingThread thread : threads)
+            {
+                thread.start();
+            }
+
         }
     }
 

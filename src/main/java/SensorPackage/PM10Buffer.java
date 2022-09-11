@@ -59,7 +59,6 @@ public class PM10Buffer implements Buffer
             }
             //System.out.println("Value sent: " + list);
             //System.out.println("Buffer: " + measurements);
-
             measurements.notify();
 
             return list;

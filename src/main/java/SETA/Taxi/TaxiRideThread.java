@@ -170,6 +170,7 @@ public class TaxiRideThread extends Thread
             }catch(Exception e){
                 e.printStackTrace();
             }*/
+            myLocalStats.resetData();
         }
 
         statsCopy.setTimestamp();

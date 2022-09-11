@@ -99,21 +99,24 @@ public class TaxiInputThread extends Thread
 
         // Notify the other taxis
         taxiToNotify = new ArrayList<>();
-        taxiToNotify.addAll(taxiList);
         ArrayList<TaxiRpcNotifyQuitThread> threads = new ArrayList<>();
-        for (TaxiData t : taxiToNotify)
-        {
-            TaxiRpcNotifyQuitThread notifyQuitThread = new TaxiRpcNotifyQuitThread(myData, t);
-            threads.add(notifyQuitThread);
-            notifyQuitThread.start();
+        synchronized (taxiToNotify) {
+            taxiToNotify.addAll(taxiList);
+            for (TaxiData t : taxiToNotify) {
+                TaxiRpcNotifyQuitThread notifyQuitThread = new TaxiRpcNotifyQuitThread(myData, t);
+                threads.add(notifyQuitThread);
+            }
         }
-        for (TaxiRpcNotifyQuitThread thread : threads)
-        {
+        for (TaxiRpcNotifyQuitThread thread : threads) {
+            thread.start();
+        }
+
+        for (TaxiRpcNotifyQuitThread thread : threads) {
             thread.join();
         }
 
         // Wait all the ACKs
-        while (!taxiToNotify.isEmpty()) {  }
+        while (!taxiToNotify.isEmpty()) {}
         System.out.println("All the ACK received about my quitting.");
 
         // Close the RPC server

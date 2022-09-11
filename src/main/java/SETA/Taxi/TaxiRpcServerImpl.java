@@ -291,6 +291,8 @@ public class TaxiRpcServerImpl extends TaxiGrpc.TaxiImplBase
                     // add the requesting taxi to the competitors as you have to wait for him to get the station
                     myChargingData.chargingCompetitors.put(request.getTaxiId(),
                             new TaxiData(request.getTaxiId(), request.getTaxiPort()));
+
+                    System.out.println("Added to the competitors with more priority than me: " + request.getTaxiId());
                 }
             }
         }
