@@ -22,6 +22,7 @@ public class TaxiRpcServerThread extends Thread
             rpcServer.awaitTermination();
             System.out.println("RPC Server terminated.");
         } catch (InterruptedException | IOException e) {
+            TaxiProcess.quitCity();
             e.printStackTrace();
         }
     }

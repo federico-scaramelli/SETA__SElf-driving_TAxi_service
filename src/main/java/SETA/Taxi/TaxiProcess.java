@@ -149,7 +149,7 @@ public class TaxiProcess
         quitCity();
     }
 
-    private static void quitCity()
+    public static void quitCity()
     {
         try {
             WebResource webResource = client.resource(adminServerAddress + removeTaxiPath + "/" + myData.ID);

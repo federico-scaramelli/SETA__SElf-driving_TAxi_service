@@ -79,11 +79,15 @@ public class TaxiRpcCompetitionThread extends Thread
             public void onError(Throwable t) {
                 if (t.getCause() == null) {
                     // Time limit reached to receive ACK from a specific taxi. Delete him from competitors.
-                    System.out.println("Taxi " + otherTaxiServer.getID() + " excluded from the competition" +
+                    /*System.out.println("Taxi " + otherTaxiServer.getID() + " excluded from the competition" +
                                         " since an ACK from it has not been received.");
                     synchronized (myRidesData.competitorsCounter) {
                         myRidesData.competitorsCounter--;
-                    }
+                    }*/
+                    System.out.println("ACK not received from taxi " + otherTaxiServer +
+                            ".\nDropping the competition to avoid errors and infinite loops.");
+                    dropCompetition();
+                    TaxiProcess.updateTaxiListAskingRestServer();
                 } else {
                     // This handles the exception caused by a not updated list in which it's contained a quit taxi
                     System.out.println("WARNING! RPC Competition.");
