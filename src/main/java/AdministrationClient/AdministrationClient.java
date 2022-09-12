@@ -36,6 +36,7 @@ public class AdministrationClient
 
     // Main menu loop
     private static void showMainMenu() {
+        scan = new Scanner(System.in);
         System.out.println("\nSelect a query: ");
         System.out.println("1 - Taxi list");
         System.out.println("2 - Average of the last N local statistics from a specific taxi");

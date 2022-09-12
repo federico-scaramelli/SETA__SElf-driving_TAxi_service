@@ -37,7 +37,7 @@ public class SetaDispatchRidesThread extends Thread {
     RideRequest dispatchedRide = null;
 
 
-    int debugCountTotal = Seta.debugCount;
+    //int debugCountTotal = Seta.debugCount;
 
 
     @Override
@@ -95,8 +95,8 @@ public class SetaDispatchRidesThread extends Thread {
         MqttMessage message = new MqttMessage(requestJson.getBytes());
         message.setQos(qos);
         System.out.println("Publishing request to the broker:\n" +
-                "--> " + dispatchedRide +
-                "\nCompleted: " + completedRides.size());
+                "--> " + dispatchedRide);// +
+                //"\nCompleted: " + completedRides.size());
         int district = GridHelper.getDistrict(dispatchedRide.startingPos);
         mqttClient.publish(topicBasePath + district, message);
     }
@@ -146,7 +146,7 @@ public class SetaDispatchRidesThread extends Thread {
                         Seta.completedRides.add(request.ID);
 
                         //=================debug
-                        if (completedRides.size() >= debugCountTotal * 2) {
+                        /*if (completedRides.size() >= debugCountTotal * 2) {
                             System.out.println("=================LISTS===============================================");
                             System.out.println("DISTRICT 1: " + rideQueues.get(0));
                             System.out.println("DISTRICT 2: " + rideQueues.get(1));
@@ -164,7 +164,7 @@ public class SetaDispatchRidesThread extends Thread {
                             frequencies.entrySet().stream()
                                     .filter(entry -> entry.getValue() > 1)
                                     .forEach(entry -> System.out.println(entry.getKey()));
-                        }
+                        }*/
                         //==========================
                     }
                 }

@@ -71,14 +71,16 @@ public class StatisticsManager
         int accomplishedRides = 0;
 
         for (int i = localStats.size() - 1; i >= localStats.size() - n; i--) {
-            double tempPM10Averages = 0.0;
             avgTraveledKm += localStats.get(i).traveledKm;
             avgBatteryLevel += localStats.get(i).batteryLevel;
-            for (double pm10Avg : localStats.get(i).pm10Averages) {
-                tempPM10Averages += pm10Avg;
+            if (localStats.get(i).pm10Averages.size() > 0) {
+                double tempPM10Averages = 0.0;
+                for (double pm10Avg : localStats.get(i).pm10Averages) {
+                    tempPM10Averages += pm10Avg;
+                }
+                tempPM10Averages /= localStats.get(i).pm10Averages.size();
+                avgPollutionLevel += tempPM10Averages;
             }
-            tempPM10Averages /= localStats.get(i).pm10Averages.size();
-            avgPollutionLevel += tempPM10Averages;
             accomplishedRides += localStats.get(i).accomplishedRides;
         }
         avgTraveledKm /= n;
