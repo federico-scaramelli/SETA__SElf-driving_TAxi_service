@@ -86,14 +86,23 @@ public class TaxiInputThread extends Thread
             myData.isQuitting = true;
         }
 
-        // Wait until the ride is completed
-        while (myRidesData.isRiding) {}
+        synchronized (myRidesData) {
+            // Wait until the ride is completed
+            if (myRidesData.isRiding) {
+                myRidesData.wait();
+            }
+        }
 
         System.out.println("QUITTING: I'm not riding.");
 
-        // Wait to terminate charging operations
-        while (myChargingData.isCharging || myChargingData.chargeCommandReceived
-                || myChargingData.currentRechargeRequest != null) {}
+        synchronized (myChargingData) {
+            // Wait to terminate charging operations
+            if (myChargingData.isCharging || myChargingData.chargeCommandReceived
+                    || myChargingData.currentRechargeRequest != null)
+            {
+                myChargingData.wait();
+            }
+        }
 
         System.out.println("QUITTING: I'm not charging.");
 
@@ -115,8 +124,15 @@ public class TaxiInputThread extends Thread
             thread.join();
         }
 
-        // Wait all the ACKs
-        while (!taxiToNotify.isEmpty()) {}
+        synchronized (taxiToNotify)
+        {
+            // Wait all the ACKs
+            if (!taxiToNotify.isEmpty())
+            {
+                taxiToNotify.wait();
+            }
+        }
+
         System.out.println("All the ACK received about my quitting.");
 
         // Close the RPC server

@@ -53,6 +53,7 @@ public class TaxiChargeThread extends Thread
             myChargingData.isCharging = false;
             myChargingData.chargeCommandReceived = false;
             myChargingData.currentRechargeRequest = null;
+            myChargingData.notify();
         }
 
         System.out.println("Charging process ended.");

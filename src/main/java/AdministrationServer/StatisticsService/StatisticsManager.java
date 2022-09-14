@@ -120,14 +120,17 @@ public class StatisticsManager
 
         for (Statistics stat : resultStatsList)
         {
-            double tempPM10Averages = 0.0;
             avgTraveledKm += stat.traveledKm;
             avgBatteryLevel += stat.batteryLevel;
-            for (double pm10Avg : stat.pm10Averages) {
-                tempPM10Averages += pm10Avg;
+
+            if (!stat.pm10Averages.isEmpty()) {
+                double tempPM10Averages = 0.0;
+                for (double pm10Avg : stat.pm10Averages) {
+                    tempPM10Averages += pm10Avg;
+                }
+                tempPM10Averages /= stat.pm10Averages.size();
+                avgPollutionLevel += tempPM10Averages;
             }
-            tempPM10Averages /= stat.pm10Averages.size();
-            avgPollutionLevel += tempPM10Averages;
             accomplishedRides += stat.accomplishedRides;
         }
         avgTraveledKm /= resultStatsList.size();

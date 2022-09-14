@@ -71,6 +71,7 @@ public class TaxiRideThread extends Thread
 
         synchronized (myRidesData) {
             myRidesData.isRiding = false;
+            myRidesData.notify();
         }
 
         // Send the completed ride to the rest server

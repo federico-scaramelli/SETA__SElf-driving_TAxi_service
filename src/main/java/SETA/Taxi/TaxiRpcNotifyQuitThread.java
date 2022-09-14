@@ -53,6 +53,8 @@ public class TaxiRpcNotifyQuitThread extends Thread
             {
                 synchronized (TaxiInputThread.taxiToNotify) {
                     TaxiInputThread.taxiToNotify.remove(otherTaxiServer);
+                    if (TaxiInputThread.taxiToNotify.isEmpty())
+                        TaxiInputThread.taxiToNotify.notify();
                 }
                 channel.shutdownNow();
             }

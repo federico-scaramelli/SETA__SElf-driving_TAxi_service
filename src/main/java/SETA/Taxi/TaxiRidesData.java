@@ -10,7 +10,7 @@ public class TaxiRidesData
         Idle
     }
 
-    public volatile Boolean isRiding = false;
+    public Boolean isRiding = false;
     public TaxiRideThread taxiRideThread = null;
     RideCompetitionState competitionState = RideCompetitionState.Idle;
     public final ArrayList<Integer> completedRides = new ArrayList<>();
