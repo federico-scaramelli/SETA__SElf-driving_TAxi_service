@@ -44,6 +44,8 @@ public class TaxiRpcNotifyQuitThread extends Thread
                 System.out.println("ERROR! Notifying quitting: Taxi " + otherTaxiServer + " did not answer.");
                 synchronized (TaxiInputThread.taxiToNotify) {
                     TaxiInputThread.taxiToNotify.remove(otherTaxiServer);
+                    if (TaxiInputThread.taxiToNotify.isEmpty())
+                        TaxiInputThread.taxiToNotify.notify();
                 }
                 channel.shutdownNow();
             }
